@@ -1,0 +1,330 @@
+'use client'
+
+import { useState } from 'react'
+import {
+  X,
+  FileText,
+  ListChecks,
+  Layers,
+  Headphones,
+  GraduationCap,
+  PenSquare,
+  Edit3,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { normalizeStudySetPayload, persistStudySet, type StudySet } from './utils'
+
+type OutputType =
+  | 'notes'
+  | 'multipleChoice'
+  | 'flashcards'
+  | 'podcast'
+  | 'tutorLesson'
+  | 'writtenTests'
+  | 'fillInTheBlanks'
+
+const outputOptions: Array<{
+  id: OutputType
+  label: string
+  description: string
+  icon: LucideIcon
+}> = [
+  {
+    id: 'notes',
+    label: 'Notes',
+    description: 'Organized study notes that capture the main ideas.',
+    icon: FileText,
+  },
+  {
+    id: 'multipleChoice',
+    label: 'Multiple Choice',
+    description: 'Auto-graded MCQs with explanations.',
+    icon: ListChecks,
+  },
+  {
+    id: 'flashcards',
+    label: 'Flashcards',
+    description: 'Front/back cards for rapid recall.',
+    icon: Layers,
+  },
+  {
+    id: 'podcast',
+    label: 'Podcast',
+    description: 'Audio-style talking points for listening practice.',
+    icon: Headphones,
+  },
+  {
+    id: 'tutorLesson',
+    label: 'Tutor Lesson',
+    description: 'Dialogue prompts for AI tutor mode.',
+    icon: GraduationCap,
+  },
+  {
+    id: 'writtenTests',
+    label: 'Written Tests',
+    description: 'Open-ended questions to mimic exams.',
+    icon: PenSquare,
+  },
+  {
+    id: 'fillInTheBlanks',
+    label: 'Fill in the Blanks',
+    description: 'Cloze statements that reinforce context clues.',
+    icon: Edit3,
+  },
+]
+
+const totalSteps = 2
+
+interface PasteModalProps {
+  onClose: () => void
+  onSuccess: (studySet: StudySet) => void
+}
+
+export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
+  const [content, setContent] = useState('')
+  const [selectedOutputs, setSelectedOutputs] = useState<OutputType[]>([])
+  const [studySetName, setStudySetName] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [step, setStep] = useState<1 | 2>(1)
+
+  const progressPercent = (step / totalSteps) * 100
+  const hasContent = content.trim().length > 0
+  const hasSelections = selectedOutputs.length > 0
+  const selectedLabels = outputOptions
+    .filter((option) => selectedOutputs.includes(option.id))
+    .map((option) => option.label)
+
+  const toggleOutput = (id: OutputType) => {
+    setSelectedOutputs((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    )
+  }
+
+  const handleGenerate = async () => {
+    if (!hasContent || !hasSelections) return
+
+    setIsLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('text', content)
+      formData.append('title', studySetName || 'Untitled Study Set')
+      formData.append('studyMethods', JSON.stringify(selectedOutputs))
+
+      const response = await fetch('/api/study-sets/post', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(
+          data?.details || data?.error || 'Failed to create study set'
+        )
+      }
+
+      const normalizedSet = normalizeStudySetPayload(
+        data?.studySet ?? data?.result ?? data,
+        studySetName
+      )
+
+      if (!normalizedSet) {
+        throw new Error('Failed to create study set: invalid response payload')
+      }
+
+      persistStudySet(normalizedSet)
+      onSuccess(normalizedSet)
+    } catch (error) {
+      console.error('Error creating study set:', error)
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create study set. Please try again.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePrimaryAction = () => {
+    if (step === 1) {
+      if (hasContent) {
+        setStep(2)
+      }
+      return
+    }
+    handleGenerate()
+  }
+
+  const handleSecondaryAction = () => {
+    if (step === 2) {
+      setStep(1)
+      return
+    }
+    onClose()
+  }
+
+  const renderContentStep = () => (
+    <div className="space-y-6">
+      <p className="text-muted-foreground">
+        Paste text, a YouTube URL, website URL, or any other content to create study material.
+      </p>
+
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Your Content
+        </label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Paste your essay, notes, URL, or any content here..."
+          className="w-full h-64 px-3 py-3 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none font-mono text-sm"
+        />
+        <p className="text-xs text-muted-foreground mt-1">{content.length} characters</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Study Set Name (optional)
+        </label>
+        <input
+          type="text"
+          value={studySetName}
+          onChange={(e) => setStudySetName(e.target.value)}
+          placeholder="e.g., Chemistry Notes"
+          className="w-full px-3 py-2 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+      </div>
+    </div>
+  )
+
+  const renderSelectionStep = () => (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border bg-background/60 p-4 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Pasted content</p>
+          <p className="text-xs text-muted-foreground">
+            {content.length} character{content.length > 1 ? 's' : ''} ready
+          </p>
+        </div>
+        <button
+          onClick={() => setStep(1)}
+          className="text-xs text-primary font-medium hover:underline"
+        >
+          Edit content
+        </button>
+      </div>
+
+      <div>
+        <p className="text-lg font-semibold text-foreground mb-2">What would you like to include?</p>
+        <p className="text-sm text-muted-foreground">
+          Choose all the study methods you want in this set. Tutora AI will only generate the
+          experiences you pick.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {outputOptions.map((option) => {
+          const Icon = option.icon
+          const isSelected = selectedOutputs.includes(option.id)
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => toggleOutput(option.id)}
+              className={`flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
+                isSelected
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/40 hover:bg-secondary/30'
+              }`}
+            >
+              <span
+                className={`p-3 rounded-xl ${
+                  isSelected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground/80'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+              </span>
+              <div className="space-y-1">
+                <p className="font-semibold text-foreground">{option.label}</p>
+                <p className="text-xs text-muted-foreground">{option.description}</p>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+        <p className="text-sm font-semibold text-foreground">Selected ({selectedOutputs.length})</p>
+        {selectedOutputs.length > 0 ? (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {selectedLabels.map((label) => (
+              <span
+                key={label}
+                className="px-3 py-1 rounded-full bg-background border border-border text-xs text-foreground"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground mt-2">Pick at least one method to continue.</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-3">
+          You can adjust or regenerate any section later from the Study Set dashboard.
+        </p>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-card rounded-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div className="flex items-start justify-between p-6 border-b border-border gap-4">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
+              Step {step} of {totalSteps}
+            </p>
+            <h2 className="text-2xl font-bold text-foreground">
+              {step === 1 ? 'Paste your content' : 'Choose your study experiences'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {step === 1
+                ? 'Add your text, URL, or notes first.'
+                : 'Select formats like flashcards, notes, MCQs, and more before generating.'}
+            </p>
+            <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6">{step === 1 ? renderContentStep() : renderSelectionStep()}</div>
+
+        <div className="flex gap-3 p-6 border-t border-border">
+          <button
+            onClick={handleSecondaryAction}
+            className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-secondary transition-colors font-medium"
+          >
+            {step === 2 ? 'Back' : 'Cancel'}
+          </button>
+          <button
+            onClick={handlePrimaryAction}
+            disabled={step === 1 ? !hasContent : !hasSelections || isLoading}
+            className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
+          >
+            {step === 1 ? 'Next' : isLoading ? 'Generating...' : 'Generate'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

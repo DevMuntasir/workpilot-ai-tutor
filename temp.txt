@@ -1,0 +1,136 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { generateText } from 'ai'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable.')
+}
+
+if (!supabaseServiceRoleKey) {
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable.')
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+export async function POST(request: NextRequest) {
+  debugger
+  console.log("hello");
+  console.log(process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  try {
+    const contentType = request.headers.get('content-type')
+    let content = ''
+    let title = ''
+
+    if (contentType?.includes('application/json')) {
+      const body = await request.json()
+      content = body.content || ''
+      title = body.title || 'Untitled Study Set'
+    } else {
+      const formData = await request.formData()
+      const files = formData.getAll('files') as File[]
+      
+      for (const file of files) {
+        const text = await file.text()
+        content += text + '\n'
+      }
+      
+      title = (formData.get('title') as string) || 'Untitled Study Set'
+    }
+
+    if (!content.trim()) {
+      return NextResponse.json(
+        { error: 'No content provided' },
+        { status: 400 }
+      )
+    }
+
+    // Generate study materials using Gemini
+    const prompt = `Analyze the following content and create comprehensive study materials. Return a JSON object with:
+{
+  "summary": "Brief summary of the content",
+  "keyPoints": ["point1", "point2", ...],
+  "questions": [
+    { "question": "...", "answer": "...", "difficulty": "easy|medium|hard" },
+    ...
+  ],
+  "flashcards": [
+    { "front": "...", "back": "..." },
+    ...
+  ]
+}
+
+Content:
+${content.substring(0, 4000)}`;
+
+    const result = await generateText({
+      model: 'google/gemini-1.5-flash',
+      prompt,
+      temperature: 0.7,
+      maxTokens: 2000,
+    })
+
+    let studyData = {
+      summary: 'Study material created',
+      keyPoints: [],
+      questions: [],
+      flashcards: [],
+    }
+
+    try {
+      const jsonMatch = result.text.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        studyData = JSON.parse(jsonMatch[0])
+      }
+    } catch (e) {
+      console.error('Failed to parse study data:', e)
+    }
+
+    // Save to Supabase
+    const { data, error } = await supabase
+      .from('study_sets')
+      .insert({
+        title,
+        content: content.substring(0, 10000),
+        study_data: studyData,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        {
+          error: 'Failed to create study set',
+          details: error.message,
+          hint: error.hint,
+        },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      studySet: {
+        id: data[0].id,
+        title,
+        items: studyData.questions.length + studyData.flashcards.length,
+        stats: {
+          unfamiliar:
+            studyData.questions.length + studyData.flashcards.length,
+          learning: 0,
+          familiar: 0,
+          mastered: 0,
+        },
+      },
+    })
+  } catch (error) {
+    console.error('Error creating study set:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

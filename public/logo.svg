@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="220" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b85b6"/>
+      <stop offset="100%" stop-color="#2d3561"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Scaled icon -->
+  <g transform="translate(40,40) scale(0.7)">
+    <path d="M100 0 L200 40 L100 80 L0 40 Z" fill="url(#grad)"/>
+    <circle cx="100" cy="120" r="40" fill="url(#grad)"/>
+    <path d="M0 160 Q100 260 200 160" fill="none" stroke="url(#grad)" stroke-width="30"/>
+    <path d="M30 200 L170 200" stroke="url(#grad)" stroke-width="10"/>
+  </g>
+
+  <!-- Text -->
+  <text x="260" y="100" font-family="Arial, sans-serif" font-size="48" fill="#2d3561" font-weight="bold">
+    Work Pilot AI
+  </text>
+  <text x="260" y="140" font-family="Arial, sans-serif" font-size="24" fill="#6b85b6">
+    AI-powered productivity
+  </text>
+</svg>
