@@ -15,7 +15,7 @@ export default function LandingPage() {
   
       <div className="relative flex min-h-screen w-full flex-col items-start justify-start">
         <BackgroundRipple />
-        <div className="mt-14 w-full">
+        <div className=" w-full">
             <Hero />
             {/* <SignInForm/> */}
             <BrandScrollVelocitySection />
@@ -26,7 +26,6 @@ export default function LandingPage() {
         </div>
       </div>
       </Nav>
- 
     </main>
   );
 }
