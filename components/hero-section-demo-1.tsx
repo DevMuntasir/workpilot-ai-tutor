@@ -100,7 +100,7 @@ export default function Hero() {
             </div>
           </div>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-            <button className=" bg-gradient-to-r from-button to-thirdary  w-full py-3 sm:w-auto sm:px-7">
+            <button className="btn-primary bg-gradient-to-r from-button to-thirdary  w-full py-3 sm:w-auto sm:px-7">
               Start Free
               <ArrowRight className="h-4 w-4" />
             </button>
