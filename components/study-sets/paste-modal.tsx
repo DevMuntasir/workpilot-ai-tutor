@@ -262,9 +262,7 @@ export default function PasteModal({ onClose }: PasteModalProps) {
 
   const renderContentStep = () => (
     <div className="space-y-6">
-      <p className="text-muted-foreground">
-        Paste text, a YouTube URL, website URL, or any other content to create study material.
-      </p>
+      
 
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
@@ -321,10 +319,7 @@ export default function PasteModal({ onClose }: PasteModalProps) {
 
       <div>
         <p className="text-lg font-semibold text-foreground mb-2">What would you like to include?</p>
-        <p className="text-sm text-muted-foreground">
-          Choose all the study methods you want in this set. WorkPilot AI will only generate the
-          experiences you pick.
-        </p>
+       
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -358,7 +353,7 @@ export default function PasteModal({ onClose }: PasteModalProps) {
         })}
       </div>
 
-      <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+      {/* <div className="rounded-2xl border border-border bg-secondary/30 p-4">
         <p className="text-sm font-semibold text-foreground">Selected ({selectedOutputs.length})</p>
         {selectedOutputs.length > 0 ? (
           <div className="flex flex-wrap gap-2 mt-3">
@@ -377,7 +372,7 @@ export default function PasteModal({ onClose }: PasteModalProps) {
         <p className="text-xs text-muted-foreground mt-3">
           You can adjust or regenerate any section later from the Study Set dashboard.
         </p>
-      </div>
+      </div> */}
     </div>
   )
 
@@ -402,7 +397,7 @@ export default function PasteModal({ onClose }: PasteModalProps) {
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === 1
-                ? 'Add your text, URL, or notes first.'
+                ? 'Add your text or notes first.'
                 : step === 2
                   ? 'Select formats like flashcards, notes, MCQs, and more before generating.'
                   : 'Realtime status of each requested job is shown below.'}

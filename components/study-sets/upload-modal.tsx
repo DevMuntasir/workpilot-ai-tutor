@@ -313,7 +313,7 @@ export default function UploadModal({ onClose }: UploadModalProps) {
   const renderUploadStep = () => (
     <div className="space-y-6">
       <p className="text-muted-foreground">
-        Upload your materials. We'll auto-convert PDFs, slides, docs, or media into study-ready text.
+        Upload your materials. We'll auto-convert PDFs, docs, text into study-ready text.
       </p>
 
       <div
@@ -334,7 +334,7 @@ export default function UploadModal({ onClose }: UploadModalProps) {
           Click to upload or drag and drop (max 10 files, 10MB each)
         </p>
         <p className="text-xs text-muted-foreground">
-          Supported: PDF, Word, PowerPoint, images, audio, and video
+          Supported: PDF, Word, images
         </p>
       </div>
 
@@ -409,9 +409,7 @@ export default function UploadModal({ onClose }: UploadModalProps) {
 
       <div>
         <p className="text-lg font-semibold text-foreground mb-2">What would you like to include?</p>
-        <p className="text-sm text-muted-foreground">
-          Choose all the study methods you want in this set. WorkPilot AI will only generate the experiences you pick.
-        </p>
+        
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
