@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   X,
   FileText,
@@ -12,7 +13,14 @@ import {
   Edit3,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { normalizeStudySetPayload, persistStudySet, type StudySet } from './utils'
+import { getApiClientErrorMessage } from '@/lib/api/client'
+import { saveStudySetGenerationMeta, saveStudySetUploadMeta, type StoredStudySetGenerationMeta } from '@/lib/api/study-sets.storage'
+import { generateStudySet, type StudySetUploadResponse, uploadStudySetText } from '@/lib/api/study-sets.service'
+import { ensureStudySetGenerationTracking, subscribeToStudySetGeneration } from './generation-tracker'
+import { GenerationStatusStep } from './generation-status-step'
+import { type StudySetUiSectionType, uiToBackendGenerationType } from './generation-mapping'
+import { createUploadPlaceholderStudySet } from './upload-placeholder'
+import { persistStudySet } from './utils'
 
 type OutputType =
   | 'notes'
@@ -73,19 +81,23 @@ const outputOptions: Array<{
   },
 ]
 
-const totalSteps = 2
+const totalSteps = 3
 
 interface PasteModalProps {
   onClose: () => void
-  onSuccess: (studySet: StudySet) => void
 }
 
-export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
+export default function PasteModal({ onClose }: PasteModalProps) {
+  const router = useRouter()
   const [content, setContent] = useState('')
   const [selectedOutputs, setSelectedOutputs] = useState<OutputType[]>([])
   const [studySetName, setStudySetName] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [step, setStep] = useState<1 | 2>(1)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [uploadedResponse, setUploadedResponse] = useState<StudySetUploadResponse | null>(null)
+  const [generationMeta, setGenerationMeta] = useState<StoredStudySetGenerationMeta | null>(null)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
 
   const progressPercent = (step / totalSteps) * 100
   const hasContent = content.trim().length > 0
@@ -100,59 +112,122 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
     )
   }
 
-  const handleGenerate = async () => {
-    if (!hasContent || !hasSelections) return
+  const uploadAndContinue = async () => {
+    if (!hasContent) return
 
-    setIsLoading(true)
+    setIsUploading(true)
+    setErrorMessage('')
     try {
-      const formData = new FormData()
-      formData.append('text', content)
-      formData.append('title', studySetName || 'Untitled Study Set')
-      formData.append('studyMethods', JSON.stringify(selectedOutputs))
-
-      const response = await fetch('/api/study-sets/post', {
-        method: 'POST',
-        body: formData,
+      const resolvedTitle = studySetName.trim() || 'Untitled Study Set'
+      const response = await uploadStudySetText({
+        title: resolvedTitle,
+        text: content,
       })
 
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(
-          data?.details || data?.error || 'Failed to create study set'
-        )
-      }
-
-      const normalizedSet = normalizeStudySetPayload(
-        data?.studySet ?? data?.result ?? data,
-        studySetName
-      )
-
-      if (!normalizedSet) {
-        throw new Error('Failed to create study set: invalid response payload')
-      }
-
-      persistStudySet(normalizedSet)
-      onSuccess(normalizedSet)
+      saveStudySetUploadMeta({
+        documentId: response.document.id,
+        embeddingJobId: response.embedding_job_id,
+        title: response.document.title,
+        filename: response.document.filename || null,
+        sourceType: 'text',
+        status: response.document.status,
+        createdAt: response.document.createdAt,
+        updatedAt: response.document.updatedAt,
+      })
+      setUploadedResponse(response)
+      setStep(2)
     } catch (error) {
       console.error('Error creating study set:', error)
-      alert(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create study set. Please try again.'
-      )
+      setErrorMessage(getApiClientErrorMessage(error, 'Failed to upload study set. Please try again.'))
     } finally {
-      setIsLoading(false)
+      setIsUploading(false)
+    }
+  }
+
+  const handleGenerate = async () => {
+    if (!hasSelections) return
+
+    if (!uploadedResponse) {
+      setErrorMessage('Upload the content first before continuing.')
+      return
+    }
+
+    setIsGenerating(true)
+    setErrorMessage('')
+
+    try {
+      const response = await generateStudySet({
+        documentId: uploadedResponse.document.id,
+        types: selectedOutputs.map((output) => uiToBackendGenerationType[output]),
+      })
+
+      const trackingStartedAt = new Date().toISOString()
+      const nextGenerationMeta = {
+        documentId: uploadedResponse.document.id,
+        studySetId: response.study_set_id,
+        batch: {
+          id: response.batch.id,
+          status: response.batch.status,
+          totalJobs: response.batch.total_jobs,
+          completedJobs: response.batch.completed_jobs,
+          failedJobs: response.batch.failed_jobs,
+          selectedTypes: response.batch.selected_types,
+          estimatedCredits: response.batch.estimated_credits,
+          createdAt: response.batch.created_at,
+        },
+        jobs: response.jobs.map((job) => ({
+          jobId: job.job_id,
+          type: job.type,
+          status: job.status,
+          estimatedCredits: job.estimated_credits,
+        })),
+        websocket: {
+          url: response.websocket.url,
+          token: response.websocket.token,
+          expiresIn: response.websocket.expires_in,
+        },
+        connectionStatus: 'idle' as const,
+        startedAt: trackingStartedAt,
+        lastEventAt: trackingStartedAt,
+        fetchedOutputs: {},
+      }
+
+      saveStudySetGenerationMeta(nextGenerationMeta)
+
+      const normalizedSet = createUploadPlaceholderStudySet({
+        documentId: uploadedResponse.document.id,
+        title: uploadedResponse.document.title || studySetName.trim() || 'Untitled Study Set',
+        selections: selectedOutputs,
+        sourceType: 'text',
+        sourceText: content,
+        createdAt: uploadedResponse.document.createdAt,
+        updatedAt: uploadedResponse.document.updatedAt,
+      })
+
+      persistStudySet(normalizedSet)
+      setGenerationMeta(nextGenerationMeta)
+      setStep(3)
+      ensureStudySetGenerationTracking(uploadedResponse.document.id)
+    } catch (error) {
+      console.error('Error generating study set:', error)
+      setErrorMessage(getApiClientErrorMessage(error, 'Failed to generate study set. Please try again.'))
+    } finally {
+      setIsGenerating(false)
     }
   }
 
   const handlePrimaryAction = () => {
     if (step === 1) {
-      if (hasContent) {
-        setStep(2)
-      }
+      void uploadAndContinue()
       return
     }
-    handleGenerate()
+
+    if (step === 3) {
+      onClose()
+      return
+    }
+
+    void handleGenerate()
   }
 
   const handleSecondaryAction = () => {
@@ -161,6 +236,28 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
       return
     }
     onClose()
+  }
+
+  useEffect(() => {
+    if (step !== 3 || !uploadedResponse?.document.id) {
+      return
+    }
+
+    const unsubscribe = subscribeToStudySetGeneration(uploadedResponse.document.id, (nextMeta) => {
+      setGenerationMeta(nextMeta)
+    })
+
+    return unsubscribe
+  }, [step, uploadedResponse?.document.id])
+
+  const handleOpenGeneratedSection = (sectionType: StudySetUiSectionType) => {
+    const documentId = generationMeta?.documentId ?? uploadedResponse?.document.id
+    if (!documentId) {
+      return
+    }
+
+    onClose()
+    router.push(`/dashboard/study-sets/${documentId}?mode=${sectionType}`)
   }
 
   const renderContentStep = () => (
@@ -175,7 +272,11 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
         </label>
         <textarea
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => {
+            setContent(e.target.value)
+            setUploadedResponse(null)
+            setErrorMessage('')
+          }}
           placeholder="Paste your essay, notes, URL, or any content here..."
           className="w-full h-64 px-3 py-3 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none font-mono text-sm"
         />
@@ -189,7 +290,11 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
         <input
           type="text"
           value={studySetName}
-          onChange={(e) => setStudySetName(e.target.value)}
+          onChange={(e) => {
+            setStudySetName(e.target.value)
+            setUploadedResponse(null)
+            setErrorMessage('')
+          }}
           placeholder="e.g., Chemistry Notes"
           className="w-full px-3 py-2 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
@@ -217,7 +322,7 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
       <div>
         <p className="text-lg font-semibold text-foreground mb-2">What would you like to include?</p>
         <p className="text-sm text-muted-foreground">
-          Choose all the study methods you want in this set. Tutora AI will only generate the
+          Choose all the study methods you want in this set. WorkPilot AI will only generate the
           experiences you pick.
         </p>
       </div>
@@ -276,6 +381,10 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
     </div>
   )
 
+  const renderGenerationStep = () => (
+    <GenerationStatusStep meta={generationMeta} onOpenSection={handleOpenGeneratedSection} />
+  )
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
@@ -285,12 +394,18 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
               Step {step} of {totalSteps}
             </p>
             <h2 className="text-2xl font-bold text-foreground">
-              {step === 1 ? 'Paste your content' : 'Choose your study experiences'}
+              {step === 1
+                ? 'Paste your content'
+                : step === 2
+                  ? 'Choose your study experiences'
+                  : 'Generating your study set'}
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === 1
                 ? 'Add your text, URL, or notes first.'
-                : 'Select formats like flashcards, notes, MCQs, and more before generating.'}
+                : step === 2
+                  ? 'Select formats like flashcards, notes, MCQs, and more before generating.'
+                  : 'Realtime status of each requested job is shown below.'}
             </p>
             <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
               <div
@@ -307,21 +422,47 @@ export default function PasteModal({ onClose, onSuccess }: PasteModalProps) {
           </button>
         </div>
 
-        <div className="p-6">{step === 1 ? renderContentStep() : renderSelectionStep()}</div>
+        <div className="p-6">
+          {step === 1 ? renderContentStep() : step === 2 ? renderSelectionStep() : renderGenerationStep()}
+        </div>
+
+        {errorMessage ? (
+          <div className="px-6 pb-1">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          </div>
+        ) : null}
 
         <div className="flex gap-3 p-6 border-t border-border">
           <button
             onClick={handleSecondaryAction}
             className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-secondary transition-colors font-medium"
           >
-            {step === 2 ? 'Back' : 'Cancel'}
+            {step === 2 ? 'Back' : step === 3 ? 'Close' : 'Cancel'}
           </button>
           <button
             onClick={handlePrimaryAction}
-            disabled={step === 1 ? !hasContent : !hasSelections || isLoading}
+            disabled={
+              step === 1
+                ? !hasContent || isUploading
+                : step === 2
+                  ? !hasSelections || isGenerating
+                  : !(generationMeta?.batch.status === 'completed')
+            }
             className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
           >
-            {step === 1 ? 'Next' : isLoading ? 'Generating...' : 'Generate'}
+            {step === 1
+              ? isUploading
+                ? 'Uploading...'
+                : 'Next'
+              : step === 2
+                ? isGenerating
+                  ? 'Generating...'
+                  : 'Generate'
+                : generationMeta?.batch.status === 'completed'
+                  ? 'Done'
+                  : 'Tracking...'}
           </button>
         </div>
       </div>

@@ -18,18 +18,18 @@ export default function Hero() {
           <h1 className="mt-6 max-w-[12ch] text-4xl font-semibold leading-[1.08] tracking-[-0.05em] text-slate-950 sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-[4.4rem]">
             Learn{" "}
             <span className="mr-2 bg-gradient-to-r from-button via-thirdary to-primary bg-clip-text text-transparent sm:mr-3">
-              Smarter
+            Smarter
             </span>
             with
             <br />
             your personal
             <span className="ml-2 bg-gradient-to-r font-extrabold from-primary via-thirdary to-button bg-clip-text text-transparent sm:ml-3">
-              AI Tutor
+            AI Tutor
             </span>
           </h1>
 
           <p className="mt-6 max-w-xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8 lg:text-lg xl:max-w-2xl">
-            Tutora combines smart summaries, guided quizzes, paper feedback, and
+            WorkPilot combines smart summaries, guided quizzes, paper feedback, and
             real-time explanations into one focused workspace built to improve how
             students actually study.
           </p>
@@ -100,7 +100,7 @@ export default function Hero() {
             </div>
           </div>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-            <button className="btn-primary w-full py-3 sm:w-auto sm:px-7">
+            <button className=" bg-gradient-to-r from-button to-thirdary  w-full py-3 sm:w-auto sm:px-7">
               Start Free
               <ArrowRight className="h-4 w-4" />
             </button>
@@ -122,7 +122,7 @@ export default function Hero() {
               priority
               sizes="(max-width: 639px) 92vw, (max-width: 1023px) 78vw, (max-width: 1279px) 42vw, 46vw"
               className="object-contain"
-              alt="Tutora dashboard preview"
+              alt="WorkPilot dashboard preview"
             />
           </div>
         </div>

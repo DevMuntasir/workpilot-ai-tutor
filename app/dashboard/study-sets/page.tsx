@@ -1,15 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Upload, Link as LinkIcon, Mic, Grid3x3, List } from 'lucide-react'
+import { Upload, Link as LinkIcon, Grid3x3, List } from 'lucide-react'
 import UploadModal from '@/components/study-sets/upload-modal'
 import PasteModal from '@/components/study-sets/paste-modal'
 import StudySetCard from '@/components/study-sets/study-set-card'
 import { getStoredStudySets, type StudySet } from '@/components/study-sets/utils'
 
 export default function StudySetsPage() {
-  const router = useRouter()
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showPasteModal, setShowPasteModal] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -24,16 +22,6 @@ export default function StudySetsPage() {
   const refreshFromStorage = () => {
     if (typeof window === 'undefined') return
     setStudySets(getStoredStudySets())
-  }
-
-  const handleNewStudySet = (newSet: StudySet) => {
-    setStudySets((prev) => {
-      const filtered = prev.filter((set) => set.id !== newSet.id)
-      return [newSet, ...filtered]
-    })
-    setShowUploadModal(false)
-    setShowPasteModal(false)
-    router.push(`/dashboard/study-sets/${newSet.id}`)
   }
 
   return (
@@ -134,7 +122,6 @@ export default function StudySetsPage() {
             setShowUploadModal(false)
             refreshFromStorage()
           }}
-          onSuccess={handleNewStudySet}
         />
       )}
 
@@ -144,7 +131,6 @@ export default function StudySetsPage() {
             setShowPasteModal(false)
             refreshFromStorage()
           }}
-          onSuccess={handleNewStudySet}
         />
       )}
     </div>

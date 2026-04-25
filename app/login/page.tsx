@@ -163,7 +163,7 @@ export default function LoginPage() {
                 <Link href="/" className="inline-flex items-center">
                   <Image
                     src="/logo.png"
-                    alt="Tutora"
+                    alt="WorkPilot"
                     width={124}
                     height={36}
                     className="h-auto w-[108px] sm:w-[124px]"
