@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   X,
   Upload,
@@ -15,8 +16,14 @@ import {
   Edit3,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import axios from 'axios'
-import { normalizeStudySetPayload, persistStudySet, type StudySet } from './utils'
+import { getApiClientErrorMessage } from '@/lib/api/client'
+import { saveStudySetGenerationMeta, saveStudySetUploadMeta, type StoredStudySetGenerationMeta } from '@/lib/api/study-sets.storage'
+import { generateStudySet, type StudySetUploadResponse, uploadStudySetPdf } from '@/lib/api/study-sets.service'
+import { ensureStudySetGenerationTracking, subscribeToStudySetGeneration } from './generation-tracker'
+import { GenerationStatusStep } from './generation-status-step'
+import { type StudySetUiSectionType, uiToBackendGenerationType } from './generation-mapping'
+import { createUploadPlaceholderStudySet } from './upload-placeholder'
+import { persistStudySet } from './utils'
 
 type OutputType =
   | 'notes'
@@ -77,19 +84,23 @@ const outputOptions: Array<{
   },
 ]
 
-const totalSteps = 2
+const totalSteps = 3
 
 interface UploadModalProps {
   onClose: () => void
-  onSuccess: (studySet: StudySet) => void
 }
 
-export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
+export default function UploadModal({ onClose }: UploadModalProps) {
+  const router = useRouter()
   const [files, setFiles] = useState<File[]>([])
   const [selectedOutputs, setSelectedOutputs] = useState<OutputType[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [uploadedResponse, setUploadedResponse] = useState<StudySetUploadResponse | null>(null)
+  const [generationMeta, setGenerationMeta] = useState<StoredStudySetGenerationMeta | null>(null)
   const [studySetName, setStudySetName] = useState('')
-  const [step, setStep] = useState<1 | 2>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const progressPercent = (step / totalSteps) * 100
@@ -99,49 +110,37 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     .filter((option) => selectedOutputs.includes(option.id))
     .map((option) => option.label)
 
+  const isAcceptedPdf = (file: File) =>
+    file.size <= 10 * 1024 * 1024 &&
+    (file.type === 'application/pdf' || /\.pdf$/i.test(file.name))
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
-    const validFiles = selectedFiles.filter(
-      (file) =>
-        file.size <= 10 * 1024 * 1024 &&
-        [
-          'image/jpeg',
-          'image/png',
-          'application/pdf',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'audio/mpeg',
-          'audio/wav',
-          'video/mp4',
-          'video/webm',
-        ].includes(file.type)
-    )
-    setFiles((prev) => [...prev, ...validFiles])
+    const nextPdf = selectedFiles.find((file) => isAcceptedPdf(file))
+
+    if (nextPdf) {
+      setFiles([nextPdf])
+      setUploadedResponse(null)
+      setErrorMessage('')
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const droppedFiles = Array.from(e.dataTransfer.files || [])
-    const validFiles = droppedFiles.filter(
-      (file) =>
-        file.size <= 10 * 1024 * 1024 &&
-        [
-          'image/jpeg',
-          'image/png',
-          'application/pdf',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'audio/mpeg',
-          'audio/wav',
-          'video/mp4',
-          'video/webm',
-        ].includes(file.type)
-    )
-    setFiles((prev) => [...prev, ...validFiles])
+    const nextPdf = droppedFiles.find((file) => isAcceptedPdf(file))
+
+    if (nextPdf) {
+      setFiles([nextPdf])
+      setUploadedResponse(null)
+      setErrorMessage('')
+    }
   }
 
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== index))
+    setUploadedResponse(null)
+    setErrorMessage('')
   }
 
   const toggleOutput = (id: OutputType) => {
@@ -150,57 +149,135 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     )
   }
 
-  const handleGenerate = async () => {
-    if (!hasFiles || !hasSelections) return
+  const uploadAndContinue = async () => {
+    if (!hasFiles) return
 
-    setIsLoading(true)
+    setIsUploading(true)
+    setErrorMessage('')
     try {
-      const formData = new FormData()
-      files.forEach((file) => formData.append('files', file))
-      formData.append('title', studySetName || 'Untitled Study Set')
-      formData.append('studyMethods', JSON.stringify(selectedOutputs))
+      const selectedFile = files[0]
+      if (!selectedFile) {
+        throw new Error('Please upload a PDF file first.')
+      }
 
-      const response = await axios.post('/api/study-sets/post', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const resolvedTitle =
+        studySetName.trim() || selectedFile.name.replace(/\.pdf$/i, '') || 'Untitled Study Set'
+
+      const response = await uploadStudySetPdf({
+        title: resolvedTitle,
+        file: selectedFile,
       })
 
-      const data = response.data
-      const normalizedSet = normalizeStudySetPayload(
-        data?.studySet ?? data?.result ?? data,
-        studySetName
-      )
-
-      if (!normalizedSet) {
-        throw new Error('Failed to create study set: invalid response payload')
-      }
-
-      if (typeof data?.warning === 'string' && data.warning.trim()) {
-        console.warn('Study set saved locally with warning:', data.warning)
-      }
-
-      persistStudySet(normalizedSet)
-      onSuccess(normalizedSet)
+      saveStudySetUploadMeta({
+        documentId: response.document.id,
+        embeddingJobId: response.embedding_job_id,
+        title: response.document.title,
+        filename: response.document.filename || selectedFile.name,
+        sourceType: 'pdf',
+        status: response.document.status,
+        createdAt: response.document.createdAt,
+        updatedAt: response.document.updatedAt,
+      })
+      setUploadedResponse(response)
+      setStep(2)
     } catch (error) {
       console.error('Error creating study set:', error)
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.details || error.response?.data?.error || error.message
-        : error instanceof Error
-          ? error.message
-          : 'Failed to create study set. Please try again.'
-      alert(message)
+      setErrorMessage(getApiClientErrorMessage(error, 'Failed to upload study set. Please try again.'))
     } finally {
-      setIsLoading(false)
+      setIsUploading(false)
+    }
+  }
+
+  const handleGenerate = async () => {
+    if (!hasSelections) return
+
+    if (!uploadedResponse) {
+      setErrorMessage('Upload the PDF first before continuing.')
+      return
+    }
+
+    setIsGenerating(true)
+    setErrorMessage('')
+
+    try {
+      const response = await generateStudySet({
+        documentId: uploadedResponse.document.id,
+        types: selectedOutputs.map((output) => uiToBackendGenerationType[output]),
+      })
+
+      const trackingStartedAt = new Date().toISOString()
+      const nextGenerationMeta = {
+        documentId: uploadedResponse.document.id,
+        studySetId: response.study_set_id,
+        batch: {
+          id: response.batch.id,
+          status: response.batch.status,
+          totalJobs: response.batch.total_jobs,
+          completedJobs: response.batch.completed_jobs,
+          failedJobs: response.batch.failed_jobs,
+          selectedTypes: response.batch.selected_types,
+          estimatedCredits: response.batch.estimated_credits,
+          createdAt: response.batch.created_at,
+        },
+        jobs: response.jobs.map((job) => ({
+          jobId: job.job_id,
+          type: job.type,
+          status: job.status,
+          estimatedCredits: job.estimated_credits,
+        })),
+        websocket: {
+          url: response.websocket.url,
+          token: response.websocket.token,
+          expiresIn: response.websocket.expires_in,
+        },
+        connectionStatus: 'idle' as const,
+        startedAt: trackingStartedAt,
+        lastEventAt: trackingStartedAt,
+        fetchedOutputs: {},
+      }
+
+      saveStudySetGenerationMeta(nextGenerationMeta)
+
+      const selectedFile = files[0]
+      const resolvedTitle =
+        studySetName.trim() ||
+        uploadedResponse.document.title ||
+        selectedFile?.name.replace(/\.pdf$/i, '') ||
+        'Untitled Study Set'
+
+      const normalizedSet = createUploadPlaceholderStudySet({
+        documentId: uploadedResponse.document.id,
+        title: resolvedTitle,
+        selections: selectedOutputs,
+        sourceType: 'pdf',
+        createdAt: uploadedResponse.document.createdAt,
+        updatedAt: uploadedResponse.document.updatedAt,
+      })
+
+      persistStudySet(normalizedSet)
+      setGenerationMeta(nextGenerationMeta)
+      setStep(3)
+      ensureStudySetGenerationTracking(uploadedResponse.document.id)
+    } catch (error) {
+      console.error('Error generating study set:', error)
+      setErrorMessage(getApiClientErrorMessage(error, 'Failed to generate study set. Please try again.'))
+    } finally {
+      setIsGenerating(false)
     }
   }
 
   const handlePrimaryAction = () => {
     if (step === 1) {
-      if (hasFiles) {
-        setStep(2)
-      }
+      void uploadAndContinue()
       return
     }
-    handleGenerate()
+
+    if (step === 3) {
+      onClose()
+      return
+    }
+
+    void handleGenerate()
   }
 
   const handleSecondaryAction = () => {
@@ -211,10 +288,32 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     onClose()
   }
 
+  useEffect(() => {
+    if (step !== 3 || !uploadedResponse?.document.id) {
+      return
+    }
+
+    const unsubscribe = subscribeToStudySetGeneration(uploadedResponse.document.id, (nextMeta) => {
+      setGenerationMeta(nextMeta)
+    })
+
+    return unsubscribe
+  }, [step, uploadedResponse?.document.id])
+
+  const handleOpenGeneratedSection = (sectionType: StudySetUiSectionType) => {
+    const documentId = generationMeta?.documentId ?? uploadedResponse?.document.id
+    if (!documentId) {
+      return
+    }
+
+    onClose()
+    router.push(`/dashboard/study-sets/${documentId}?mode=${sectionType}`)
+  }
+
   const renderUploadStep = () => (
     <div className="space-y-6">
       <p className="text-muted-foreground">
-        Upload your materials. We'll auto-convert PDFs, slides, docs, or media into study-ready text.
+        Upload your materials. We'll auto-convert PDFs, docs, text into study-ready text.
       </p>
 
       <div
@@ -226,9 +325,8 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
         <input
           ref={fileInputRef}
           type="file"
-          multiple
           onChange={handleFileSelect}
-          accept="image/*,.pdf,.doc,.docx,audio/*,video/*"
+          accept=".pdf,application/pdf"
           className="hidden"
         />
         <Upload className="w-12 h-12 text-primary mx-auto mb-3" />
@@ -236,7 +334,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
           Click to upload or drag and drop (max 10 files, 10MB each)
         </p>
         <p className="text-xs text-muted-foreground">
-          Supported: PDF, Word, PowerPoint, images, audio, and video
+          Supported: PDF, Word, images
         </p>
       </div>
 
@@ -282,7 +380,11 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
         <input
           type="text"
           value={studySetName}
-          onChange={(e) => setStudySetName(e.target.value)}
+          onChange={(e) => {
+            setStudySetName(e.target.value)
+            setUploadedResponse(null)
+            setErrorMessage('')
+          }}
           placeholder="e.g., Biology Chapter 3"
           className="w-full px-3 py-2 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
@@ -307,9 +409,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
 
       <div>
         <p className="text-lg font-semibold text-foreground mb-2">What would you like to include?</p>
-        <p className="text-sm text-muted-foreground">
-          Choose all the study methods you want in this set. Tutora AI will only generate the experiences you pick.
-        </p>
+        
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -370,6 +470,10 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     </div>
   )
 
+  const renderGenerationStep = () => (
+    <GenerationStatusStep meta={generationMeta} onOpenSection={handleOpenGeneratedSection} />
+  )
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-2xl max-w-3xl w-full max-h-screen overflow-y-auto shadow-2xl">
@@ -379,12 +483,18 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               Step {step} of {totalSteps}
             </p>
             <h2 className="text-2xl font-bold text-foreground">
-              {step === 1 ? 'Please upload your file' : 'Choose your study experiences'}
+              {step === 1
+                ? 'Please upload your file'
+                : step === 2
+                  ? 'Choose your study experiences'
+                  : 'Generating your study set'}
             </h2>
             <p className="text-sm text-muted-foreground">
               {step === 1
                 ? 'We will turn your files into insane study material.'
-                : 'Select formats like flashcards, notes, MCQs, and more before generating.'}
+                : step === 2
+                  ? 'Select formats like flashcards, notes, MCQs, and more before generating.'
+                  : 'Realtime status of each requested job is shown below.'}
             </p>
             <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
               <div
@@ -401,25 +511,50 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
           </button>
         </div>
 
-        <div className="p-6">{step === 1 ? renderUploadStep() : renderSelectionStep()}</div>
+        <div className="p-6">
+          {step === 1 ? renderUploadStep() : step === 2 ? renderSelectionStep() : renderGenerationStep()}
+        </div>
+
+        {errorMessage ? (
+          <div className="px-6 pb-1">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          </div>
+        ) : null}
 
         <div className="flex gap-3 p-6 border-t border-border">
           <button
             onClick={handleSecondaryAction}
             className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-secondary transition-colors font-medium"
           >
-            {step === 2 ? 'Back' : 'Cancel'}
+            {step === 2 ? 'Back' : step === 3 ? 'Close' : 'Cancel'}
           </button>
           <button
             onClick={handlePrimaryAction}
-            disabled={step === 1 ? !hasFiles : !hasSelections || isLoading}
+            disabled={
+              step === 1
+                ? !hasFiles || isUploading
+                : step === 2
+                  ? !hasSelections || isGenerating
+                  : !(generationMeta?.batch.status === 'completed')
+            }
             className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
           >
-            {step === 1 ? 'Next' : isLoading ? 'Generating...' : 'Generate'}
+            {step === 1
+              ? isUploading
+                ? 'Uploading...'
+                : 'Next'
+              : step === 2
+                ? isGenerating
+                  ? 'Generating...'
+                  : 'Generate'
+                : generationMeta?.batch.status === 'completed'
+                  ? 'Done'
+                  : 'Tracking...'}
           </button>
         </div>
       </div>
     </div>
   )
 }
-

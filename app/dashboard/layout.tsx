@@ -153,7 +153,7 @@ function DashboardLayoutContent({
       >
         <div className="h-[70px] items-center px-6 flex items-center border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="text-3xl font-bold text-primary">Tutora</div>
+            <div className="text-3xl font-bold text-primary">WorkPilot</div>
           </Link>
           {/* {isStudySetDetail && activeStudySet && (
             <p className="mt-2 line-clamp-2 text-xs font-medium text-sidebar-foreground/80">

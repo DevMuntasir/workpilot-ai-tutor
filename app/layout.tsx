@@ -148,7 +148,7 @@ const themeInitScript = `
 `
 
 export const metadata: Metadata = {
-  title: 'Tutora - AI-Powered Study Platform',
+  title: 'WorkPilot - AI-Powered Study Platform',
   description: 'Create interactive study materials, flashcards, quizzes, and grade your papers with AI-powered feedback',
   generator: 'v0.app',
   icons: {
