@@ -23,10 +23,10 @@ export default function Footer() {
                                                 width={30}
                                                 height={30}
                                             />
-                                            <span className="font-medium">DevStudio</span>
+                                            <span className="font-medium">WorlkPilot</span>
                                         </a>
                                     </div>
-                                    <div className="ml-2 mt-2">© copyright DevStudios 2024. All rights reserved.</div>
+                                    <div className="ml-2 mt-2">© copyright WorkPilot 2026. All rights reserved.</div>
                                 </div>
 
                                 <div className="mt-10 grid grid-cols-2 items-start gap-10 sm:mt-0 md:mt-0 lg:grid-cols-4">
@@ -38,7 +38,7 @@ export default function Footer() {
                             </div>
 
                             <p className="inset-x-0 mt-20 bg-gradient-to-b from-neutral-50 to-neutral-200 bg-clip-text text-center text-5xl font-bold text-transparent md:text-9xl lg:text-[12rem] xl:text-[13rem] dark:from-neutral-950 dark:to-neutral-800">
-                                WorkPilot.AI
+                                    
                             </p>
                         </div>
                     </div>

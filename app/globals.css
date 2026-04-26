@@ -12,9 +12,9 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #346739;
-  --thirdary: #01020f;
-  --buttons: red;
+  --primary: #5B65E0;
+  --thirdary: #5100a7;
+  --buttons: #5B65E0;
   --button-foreground: #5B65E0;
   --primary-foreground: #5B65E0;
   --secondary: #f5f5f5;
@@ -36,7 +36,7 @@
   --radius: 0.625rem;
   --sidebar: #F5E6E0;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #346739;
+  --sidebar-primary: #5B65E0;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(159, 203, 152, 0.208);
   --sidebar-accent-foreground: #9FCB98;

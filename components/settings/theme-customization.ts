@@ -87,14 +87,15 @@ export const THEME_FONT_OPTIONS: ThemeFontOption[] = [
 ]
 
 export const DEFAULT_THEME_CUSTOMIZATION: ThemeCustomization = {
-  primaryColor: '#346739',
-  buttonColor: '#346739',
-  accentColor: '#9FCB98',
+  primaryColor: '#5B65E0',
+  buttonColor: '#5B65E0',
+  accentColor: 'rgba(81, 110, 225, 0.02)',
   secondaryColor: '#F5F5F5',
-  sidebarColor: '#F5E6E0',
+  sidebarColor: '#F0F3FF',
   textColor: '#1A1A1A',
   bodyFontFamily: THEME_FONT_OPTIONS[0].value,
   headingFontFamily: THEME_FONT_OPTIONS[0].value,
+  
 }
 
 const HEX_COLOR_PATTERN = /^#([0-9a-f]{6})$/i
