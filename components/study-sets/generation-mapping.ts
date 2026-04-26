@@ -40,7 +40,7 @@ export const backendTaskTypeLabels: Record<StudySetGenerateType, string> = {
   podcast: 'Podcast',
   quiz: 'Quiz',
 }
-// a
+
 
 const backendToUiTaskTypeMap: Partial<Record<StudySetGenerateType, StudySetUiSectionType>> = {
   notes: 'notes',
