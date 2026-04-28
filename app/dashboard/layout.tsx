@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import { signOut } from 'firebase/auth'
 import { getStoredStudySetById, getStoredStudySets, type StudySet } from '@/components/study-sets/utils'
-import SettingsModal from '@/components/settings/settings-modal'
+import SettingsModal, { type SettingsTab } from '@/components/settings/settings-modal'
 import { deleteCurrentSession } from '@/lib/api/auth.service'
 import { clearAuthBrowserState } from '@/lib/api/session-storage'
 import { auth } from '@/lib/firebase'
@@ -59,11 +59,13 @@ function DashboardLayoutContent({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>('personalizedAi')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [activeStudySet, setActiveStudySet] = useState<StudySet | null>(null)
+  const billingState = searchParams.get('billing')
 
   const handleLogout = async () => {
     if (isLoggingOut) {
@@ -136,6 +138,15 @@ function DashboardLayoutContent({
     }
   }, [isStudySetDetail])
 
+  useEffect(() => {
+    if (!billingState) {
+      return
+    }
+
+    setSettingsInitialTab('billing')
+    setShowSettingsModal(true)
+  }, [billingState])
+
   const currentMode = searchParams.get('mode')
   const defaultMode =
     activeStudySet?.sections.find((section) => section.type === 'notes')?.type ??
@@ -196,7 +207,10 @@ function DashboardLayoutContent({
 
               <button
                 type="button"
-                onClick={() => setShowSettingsModal(true)}
+                onClick={() => {
+                  setSettingsInitialTab('personalizedAi')
+                  setShowSettingsModal(true)
+                }}
                 className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
               >
                 <SettingsIcon className="w-4 h-4" />
@@ -230,7 +244,10 @@ function DashboardLayoutContent({
 
               <button
                 type="button"
-                onClick={() => setShowSettingsModal(true)}
+                onClick={() => {
+                  setSettingsInitialTab('personalizedAi')
+                  setShowSettingsModal(true)
+                }}
                 className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary transition-colors"
               >
                 <SettingsIcon className="w-4 h-4" />
@@ -241,7 +258,14 @@ function DashboardLayoutContent({
         </nav>
 
         <div className="p-4 border-t border-sidebar-border space-y-3">
-          <button className="w-full bg-primary text-primary-foreground py-2.5 px-4 rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
+          <button
+            type="button"
+            onClick={() => {
+              setSettingsInitialTab('billing')
+              setShowSettingsModal(true)
+            }}
+            className="w-full bg-primary text-primary-foreground py-2.5 px-4 rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity"
+          >
             Upgrade to Unlimited
           </button>
           <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer">
@@ -291,7 +315,7 @@ function DashboardLayoutContent({
       </div>
 
       {showSettingsModal && (
-        <SettingsModal onClose={() => setShowSettingsModal(false)} />
+        <SettingsModal onClose={() => setShowSettingsModal(false)} initialTab={settingsInitialTab} />
       )}
     </div>
   )

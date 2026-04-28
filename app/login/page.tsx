@@ -105,7 +105,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background px-4 py-6 text-foreground sm:px-6 lg:px-10">
+    <main className="relative bg-background px-4 py-6 text-foreground sm:px-6 lg:px-10">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
@@ -118,11 +118,11 @@ export default function LoginPage() {
         }}
       />
 
-      <div className="relative mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl items-center justify-center">
+      <div className="relative mx-auto flex h-screen w-full max-w-7xl items-center justify-center">
         <section className="grid w-full overflow-hidden rounded-[32px] border border-white/70 bg-white/75 shadow-[0_30px_90px_rgba(60,86,134,0.14)] backdrop-blur-xl lg:grid-cols-[1.08fr_0.92fr]">
-          <div className="relative overflow-hidden p-5 sm:p-7 lg:p-8">
+          <div className="relative overflow-hidden p-5 sm:p-7 lg:p-8 box-border">
             <div
-              className="relative flex h-full min-h-[320px] items-end justify-center overflow-hidden rounded-[28px] px-6 pb-0 pt-10 sm:px-8 lg:min-h-[700px]"
+              className="relative flex  items-end justify-center overflow-hidden rounded-[28px] px-6 pb-0 pt-10 sm:px-8 h-screen"
               style={{
                 background: `linear-gradient(160deg, color-mix(in srgb, var(--thirdary) 42%, white) 0%, color-mix(in srgb, var(--button) 50%, white) 54%, color-mix(in srgb, var(--primary) 26%, white) 100%)`,
               }}

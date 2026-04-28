@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from '@/components/ui/toaster'
 import {
   DEFAULT_THEME_CUSTOMIZATION,
   THEME_CUSTOMIZATION_STORAGE_KEY,
@@ -182,6 +183,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
         {children}
+        <Toaster />
         <Analytics />
       </body>
     </html>

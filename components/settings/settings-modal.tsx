@@ -1,7 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { RotateCcw, Upload, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { BarChart3, LoaderCircle, RefreshCcw, RotateCcw, Upload, X } from 'lucide-react'
+import BillingSettings from '@/components/settings/billing-settings'
+import { Button } from '@/components/ui/button'
+import { fetchCreditBalance, getApiClientErrorMessage } from '@/lib/api'
+import { useToast } from '@/hooks/use-toast'
 import {
   applyThemeCustomization,
   clearThemeCustomization,
@@ -13,7 +17,7 @@ import {
   type ThemeCustomization,
 } from '@/components/settings/theme-customization'
 
-type SettingsTab = 'account' | 'profile' | 'usage' | 'personalizedAi' | 'customizeTheme'
+export type SettingsTab = 'account' | 'profile' | 'usage' | 'billing' | 'personalizedAi' | 'customizeTheme'
 
 type PersonalizedAiSettings = {
   writingSampleName: string
@@ -29,12 +33,14 @@ const menuItems: Array<{ id: SettingsTab; label: string }> = [
   { id: 'account', label: 'Account' },
   { id: 'profile', label: 'Profile' },
   { id: 'usage', label: 'Usage' },
+  { id: 'billing', label: 'Billing' },
   { id: 'personalizedAi', label: 'Personalized AI' },
   { id: 'customizeTheme', label: 'Customize Theme' },
 ]
 
 interface SettingsModalProps {
   onClose: () => void
+  initialTab?: SettingsTab
 }
 
 const formatFileSize = (size: number) =>
@@ -60,14 +66,18 @@ const getContrastRating = (ratio: number) => {
   return 'Fail'
 }
 
-export default function SettingsModal({ onClose }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('personalizedAi')
+export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }: SettingsModalProps) {
+  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [savedData, setSavedData] = useState<PersonalizedAiSettings | null>(null)
   const [themeSettings, setThemeSettings] = useState<ThemeCustomization>(DEFAULT_THEME_CUSTOMIZATION)
   const [isSaving, setIsSaving] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [themeStatus, setThemeStatus] = useState<string | null>(null)
+  const [creditBalance, setCreditBalance] = useState<number | null>(null)
+  const [hasLoadedUsage, setHasLoadedUsage] = useState(false)
+  const [isUsageLoading, setIsUsageLoading] = useState(false)
   const textContrastOnLight = getContrastRatio(themeSettings.textColor, LIGHT_BACKGROUND_REFERENCE)
   const textContrastOnDark = getContrastRatio(themeSettings.textColor, DARK_BACKGROUND_REFERENCE)
 
@@ -89,6 +99,32 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     window.addEventListener('keydown', onEsc)
     return () => window.removeEventListener('keydown', onEsc)
   }, [onClose])
+
+  const loadCreditBalance = useCallback(async () => {
+    setIsUsageLoading(true)
+
+    try {
+      const result = await fetchCreditBalance()
+      setCreditBalance(result.current)
+      setHasLoadedUsage(true)
+    } catch (error) {
+      toast({
+        title: 'Unable to load usage',
+        description: getApiClientErrorMessage(error, 'Current balance could not be loaded.'),
+        variant: 'destructive',
+      })
+    } finally {
+      setIsUsageLoading(false)
+    }
+  }, [toast])
+
+  useEffect(() => {
+    if (activeTab !== 'usage' || hasLoadedUsage) {
+      return
+    }
+
+    void loadCreditBalance()
+  }, [activeTab, hasLoadedUsage, loadCreditBalance])
 
   const saveSample = async () => {
     if (!selectedFile) return
@@ -162,6 +198,38 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {status && <p className="text-sm text-primary">{status}</p>}
 
                 <button onClick={saveSample} disabled={!selectedFile || isSaving} className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">{isSaving ? 'Saving...' : 'Save'}</button>
+              </div>
+            ) : activeTab === 'usage' ? (
+              <div className="space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Usage</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Your current credit balance from the backend.</p>
+                  </div>
+
+                  <Button variant="outline" onClick={() => void loadCreditBalance()} disabled={isUsageLoading}>
+                    {isUsageLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                    Refresh
+                  </Button>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-secondary/10 p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                      <BarChart3 className="h-6 w-6" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-muted-foreground">Current Balance</p>
+                      <p className="mt-2 text-3xl font-semibold text-foreground">
+                        {isUsageLoading && !hasLoadedUsage ? 'Loading...' : (creditBalance ?? 0).toLocaleString('en-US')}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Available credits currently assigned to this account.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : activeTab === 'customizeTheme' ? (
               <div className="space-y-6">
@@ -330,12 +398,16 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   <button onClick={resetThemeSettings} className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"><RotateCcw className="h-4 w-4" />Reset</button>
                 </div>
               </div>
-            ) : (
+            ) : activeTab === 'billing' ? null : (
               <div className="rounded-xl border border-border bg-secondary/10 p-5">
                 <h3 className="text-base font-semibold text-foreground">{menuItems.find((item) => item.id === activeTab)?.label}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">This section will be added soon. For now, only Personalized AI is enabled.</p>
               </div>
             )}
+
+            <div className={activeTab === 'billing' ? 'block' : 'hidden'}>
+              <BillingSettings isActive={activeTab === 'billing'} />
+            </div>
           </section>
         </div>
       </div>
