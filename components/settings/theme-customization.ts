@@ -89,7 +89,7 @@ export const THEME_FONT_OPTIONS: ThemeFontOption[] = [
 export const DEFAULT_THEME_CUSTOMIZATION: ThemeCustomization = {
   primaryColor: '#5B65E0',
   buttonColor: '#5B65E0',
-  accentColor: 'rgba(81, 110, 225, 0.02)',
+  accentColor: '#afc0fd',
   secondaryColor: '#F5F5F5',
   sidebarColor: '#F0F3FF',
   textColor: '#1A1A1A',
