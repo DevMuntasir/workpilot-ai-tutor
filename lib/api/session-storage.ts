@@ -1,5 +1,6 @@
 const AUTH_SESSION_STORAGE_KEY = 'ai_tutora_auth_session'
 const FIREBASE_STORAGE_KEY_PREFIX = 'firebase:'
+const ACCESS_TOKEN_EXPIRY_LEEWAY_MS = 30_000
 
 export type StoredAuthObject = {
   token_type: string
@@ -7,6 +8,7 @@ export type StoredAuthObject = {
   expires_at: string
   refresh_token: string
   refresh_expires_at: string
+  user_role?: string
 }
 
 const isBrowser = () => typeof window !== 'undefined'
@@ -53,6 +55,49 @@ export function getStoredAuthObject(): StoredAuthObject | null {
 
 export function getStoredAccessToken() {
   return getStoredAuthObject()?.access_token ?? null
+}
+
+function parseAuthTimestamp(value: string) {
+  const timestamp = Date.parse(value)
+  return Number.isNaN(timestamp) ? null : timestamp
+}
+
+export function isAuthTokenExpired(expiresAt: string, leewayMs = ACCESS_TOKEN_EXPIRY_LEEWAY_MS) {
+  const expiresAtTimestamp = parseAuthTimestamp(expiresAt)
+
+  if (expiresAtTimestamp === null) {
+    return true
+  }
+
+  return expiresAtTimestamp - leewayMs <= Date.now()
+}
+
+export function isStoredAccessTokenExpired() {
+  const storedAuth = getStoredAuthObject()
+
+  if (!storedAuth?.access_token) {
+    return true
+  }
+
+  return isAuthTokenExpired(storedAuth.expires_at)
+}
+
+export function isStoredRefreshTokenUsable() {
+  const storedAuth = getStoredAuthObject()
+
+  if (!storedAuth?.refresh_token) {
+    return false
+  }
+
+  return !isAuthTokenExpired(storedAuth.refresh_expires_at, 0)
+}
+
+export function replaceStoredAuthObject(auth: StoredAuthObject) {
+  const currentAuth = getStoredAuthObject()
+  saveAuthObject({
+    ...auth,
+    user_role: auth.user_role ?? currentAuth?.user_role,
+  })
 }
 
 export function clearStoredAuthObject() {

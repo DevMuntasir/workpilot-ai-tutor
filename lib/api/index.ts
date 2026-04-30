@@ -1,5 +1,11 @@
 export { ApiClient, ApiClientError, apiClient, getApiClientErrorMessage } from '@/lib/api/client'
-export { createFirebaseSession, deleteCurrentSession } from '@/lib/api/auth.service'
+export { fetchAdminUserDetails, fetchAdminUsers, updateAdminUser } from '@/lib/api/admin-users.service'
+export {
+  createFirebaseSession,
+  deleteCurrentSession,
+  getPortalRouteByRole,
+  refreshAccessToken,
+} from '@/lib/api/auth.service'
 export {
   cancelCurrentSubscription,
   createSubscriptionCheckout,
@@ -30,8 +36,25 @@ export {
   uploadStudySetPdf,
   uploadStudySetText,
 } from '@/lib/api/study-sets.service'
-export { clearAuthBrowserState, clearStoredAuthObject, getStoredAccessToken, getStoredAuthObject, saveAuthObject } from '@/lib/api/session-storage'
-export type { FirebaseSessionResponse, SessionAuth } from '@/lib/api/auth.service'
+export {
+  clearAuthBrowserState,
+  clearStoredAuthObject,
+  getStoredAccessToken,
+  getStoredAuthObject,
+  isStoredAccessTokenExpired,
+  isStoredRefreshTokenUsable,
+  replaceStoredAuthObject,
+  saveAuthObject,
+} from '@/lib/api/session-storage'
+export type { FirebaseSessionResponse, SessionAuth, UserRole } from '@/lib/api/auth.service'
+export type {
+  AdminUser,
+  AdminUserDetails,
+  AdminUserSubscription,
+  FetchAdminUsersParams,
+  FetchAdminUsersResult,
+  UpdateAdminUserPayload,
+} from '@/lib/api/admin-users.service'
 export type {
   CreditBalance,
   CurrentSubscription,

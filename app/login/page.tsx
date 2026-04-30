@@ -3,20 +3,21 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
 import { signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { createFirebaseSession } from '@/lib/api/auth.service'
+import { createFirebaseSession, getPortalRouteByRole } from '@/lib/api/auth.service'
 import { getApiClientErrorMessage } from '@/lib/api/client'
 import { clearAuthBrowserState, getStoredAuthObject, saveAuthObject } from '@/lib/api/session-storage'
 import { auth, googleProvider, isFirebaseConfigured } from '@/lib/firebase'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [authCheckComplete, setAuthCheckComplete] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,10 +34,21 @@ export default function LoginPage() {
   useEffect(() => {
     const storedAuth = getStoredAuthObject()
 
-    if (storedAuth?.access_token) {
-      router.replace('/dashboard')
+    if (!storedAuth?.access_token) {
+      setAuthCheckComplete(true)
+      return
     }
+
+    router.replace(getPortalRouteByRole(storedAuth.user_role))
   }, [router])
+
+  if (!authCheckComplete) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-6 text-foreground">
+        <LoaderCircle className="h-8 w-8 animate-spin" />
+      </main>
+    )
+  }
 
   const createSessionAndRedirect = async (firebaseIdToken: string) => {
     const session = await createFirebaseSession({
@@ -45,8 +57,11 @@ export default function LoginPage() {
       deviceType: 'web',
     })
 
-    saveAuthObject(session.auth)
-    router.replace('/dashboard')
+    saveAuthObject({
+      ...session.auth,
+      user_role: session.user.role,
+    })
+    router.replace(getPortalRouteByRole(session.user.role))
   }
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {

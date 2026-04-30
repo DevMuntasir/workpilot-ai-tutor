@@ -47,6 +47,12 @@ export type FirebaseSessionResponse = {
 
 const SESSION_ENDPOINT = '/api/v1/auth/session'
 
+export type UserRole = 'student' | 'admin'
+
+export function getPortalRouteByRole(role: string | null | undefined) {
+  return role === 'admin' ? '/admin' : '/dashboard'
+}
+
 export async function createFirebaseSession(payload: CreateFirebaseSessionPayload) {
   return apiClient.request<FirebaseSessionResponse>(SESSION_ENDPOINT, {
     method: 'POST',
@@ -61,6 +67,10 @@ export async function createFirebaseSession(payload: CreateFirebaseSessionPayloa
     omitDefaultHeaders: true,
     omitAuthHeader: true,
   })
+}
+
+export async function refreshAccessToken(refreshToken: string) {
+  return apiClient.refreshAccessToken(refreshToken)
 }
 
 export async function deleteCurrentSession() {

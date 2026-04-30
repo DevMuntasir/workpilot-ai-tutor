@@ -1,4 +1,13 @@
-import { getStoredAccessToken } from '@/lib/api/session-storage'
+import { signOut } from 'firebase/auth'
+import {
+  clearAuthBrowserState,
+  getStoredAuthObject,
+  isStoredAccessTokenExpired,
+  isStoredRefreshTokenUsable,
+  replaceStoredAuthObject,
+  type StoredAuthObject,
+} from '@/lib/api/session-storage'
+import { auth } from '@/lib/firebase'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -9,6 +18,7 @@ type ApiRequestOptions = {
   signal?: AbortSignal
   omitDefaultHeaders?: boolean
   omitAuthHeader?: boolean
+  retryOnUnauthorized?: boolean
 }
 
 type ApiClientConfig = {
@@ -92,10 +102,112 @@ function parseResponsePayload(responseText: string): unknown {
 export class ApiClient {
   private readonly baseUrl: string
   private readonly timeoutMs: number
+  private refreshPromise: Promise<StoredAuthObject | null> | null = null
 
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = (config.baseUrl ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/, '')
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  }
+
+  private createRequestUrl(path: string) {
+    return `${this.baseUrl}${path}`
+  }
+
+  private async executeFetch(
+    path: string,
+    method: HttpMethod,
+    requestBody: BodyInit | undefined,
+    headers: Headers,
+    signal?: AbortSignal,
+  ) {
+    const abortController = new AbortController()
+    const timeoutHandle = setTimeout(() => abortController.abort(), this.timeoutMs)
+
+    if (signal) {
+      signal.addEventListener('abort', () => abortController.abort(), { once: true })
+    }
+
+    try {
+      return await fetch(this.createRequestUrl(path), {
+        method,
+        body: requestBody,
+        headers,
+        signal: abortController.signal,
+      })
+    } finally {
+      clearTimeout(timeoutHandle)
+    }
+  }
+
+  private async handleAuthFailure() {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (auth) {
+      await signOut(auth).catch(() => null)
+    }
+
+    clearAuthBrowserState()
+    window.location.replace('/')
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    return this.request<StoredAuthObject>('/api/v1/auth/refresh', {
+      method: 'POST',
+      body: {
+        refresh_token: refreshToken,
+      },
+      headers: {
+        'content-type': 'application/json',
+      },
+      omitDefaultHeaders: true,
+      omitAuthHeader: true,
+      retryOnUnauthorized: false,
+    })
+  }
+
+  private async refreshStoredSession() {
+    if (this.refreshPromise) {
+      return this.refreshPromise
+    }
+
+    this.refreshPromise = (async () => {
+      const storedAuth = getStoredAuthObject()
+
+      if (!storedAuth?.refresh_token || !isStoredRefreshTokenUsable()) {
+        await this.handleAuthFailure()
+        return null
+      }
+
+      try {
+        const refreshedAuth = await this.refreshAccessToken(storedAuth.refresh_token)
+        replaceStoredAuthObject(refreshedAuth)
+        return refreshedAuth
+      } catch {
+        await this.handleAuthFailure()
+        return null
+      } finally {
+        this.refreshPromise = null
+      }
+    })()
+
+    return this.refreshPromise
+  }
+
+  async ensureValidAccessToken() {
+    const storedAuth = getStoredAuthObject()
+
+    if (!storedAuth) {
+      return null
+    }
+
+    if (!storedAuth.access_token || isStoredAccessTokenExpired()) {
+      const refreshedAuth = await this.refreshStoredSession()
+      return refreshedAuth?.access_token ?? null
+    }
+
+    return storedAuth.access_token
   }
 
   async request<TResponse>(path: string, options: ApiRequestOptions = {}) {
@@ -106,6 +218,7 @@ export class ApiClient {
       signal,
       omitDefaultHeaders = false,
       omitAuthHeader = false,
+      retryOnUnauthorized = true,
     } = options
 
     const requestHeaders = new Headers()
@@ -115,7 +228,7 @@ export class ApiClient {
     }
 
     if (!omitAuthHeader) {
-      const accessToken = getStoredAccessToken()
+      const accessToken = await this.ensureValidAccessToken()
 
       if (accessToken) {
         requestHeaders.set('authorization', `Bearer ${accessToken}`)
@@ -143,22 +256,17 @@ export class ApiClient {
       }
     }
 
-    const abortController = new AbortController()
-    const timeoutHandle = setTimeout(() => abortController.abort(), this.timeoutMs)
-
-    if (signal) {
-      signal.addEventListener('abort', () => abortController.abort(), { once: true })
-    }
-
-    const requestUrl = `${this.baseUrl}${path}`
-
     try {
-      const response = await fetch(requestUrl, {
-        method,
-        body: requestBody,
-        headers: requestHeaders,
-        signal: abortController.signal,
-      })
+      let response = await this.executeFetch(path, method, requestBody, requestHeaders, signal)
+
+      if (response.status === 401 && !omitAuthHeader && retryOnUnauthorized) {
+        const refreshedAuth = await this.refreshStoredSession()
+
+        if (refreshedAuth?.access_token) {
+          requestHeaders.set('authorization', `Bearer ${refreshedAuth.access_token}`)
+          response = await this.executeFetch(path, method, requestBody, requestHeaders, signal)
+        }
+      }
 
       const responseText = await response.text()
       const responseData = parseResponsePayload(responseText)
@@ -179,8 +287,6 @@ export class ApiClient {
       }
 
       throw new ApiClientError('Network error. Please check your connection and try again.')
-    } finally {
-      clearTimeout(timeoutHandle)
     }
   }
 }
