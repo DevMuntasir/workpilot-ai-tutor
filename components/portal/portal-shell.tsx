@@ -64,7 +64,7 @@ export function PortalShell({
               <Link
                 key={`${item.href}-${item.label}`}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
                   item.isActive
                     ? 'bg-sidebar-accent text-sidebar-primary font-semibold'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-primary'

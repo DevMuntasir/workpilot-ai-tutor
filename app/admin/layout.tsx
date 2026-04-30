@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Users } from 'lucide-react'
+import { Bot, Coins, LayoutDashboard, PanelsTopLeft, Users } from 'lucide-react'
 import { signOut } from 'firebase/auth'
 
 import { PortalShell, type PortalNavItem } from '@/components/portal/portal-shell'
@@ -21,6 +21,21 @@ const adminNavItems: PortalNavItem[] = [
     label: 'Users',
     href: '/admin/users',
     icon: Users,
+  },
+  {
+    label: 'Credits',
+    href: '/admin/credits',
+    icon: Coins,
+  },
+  {
+    label: 'Plans',
+    href: '/admin/plans',
+    icon: PanelsTopLeft,
+  },
+  {
+    label: 'Models',
+    href: '/admin/models',
+    icon: Bot,
   },
 ]
 

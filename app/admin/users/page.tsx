@@ -180,36 +180,9 @@ export default function AdminUsersPage() {
   return (
     <section className="p-4 md:p-6">
       <div className="space-y-6">
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                Admin Portal
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-                Users
-              </h1>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Search, filter, and review account status for every user from the admin API.
-              </p>
-            </div>
-
-            <div className="grid min-w-full gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-              <div className="rounded-2xl border border-border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Loaded</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{users.length}</p>
-              </div>
-              <div className="rounded-2xl border border-border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Active</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{totalActiveUsers}</p>
-              </div>
-              <div className="rounded-2xl border border-border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Tokens</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{totalTokenBalance}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Users
+        </h1>
 
         <div className="rounded-3xl border border-border bg-card shadow-sm">
           <div className="border-b border-border p-5">
@@ -420,6 +393,9 @@ export default function AdminUsersPage() {
                                     : 'Inactive'}
                               </span>
                             </div>
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={`/admin/credits?userId=${user.id}`}>Credits</Link>
+                            </Button>
                             <Button asChild size="sm" variant="outline">
                               <Link href={`/admin/users/${user.id}`}>View</Link>
                             </Button>

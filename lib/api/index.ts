@@ -1,5 +1,20 @@
 export { ApiClient, ApiClientError, apiClient, getApiClientErrorMessage } from '@/lib/api/client'
-export { fetchAdminUserDetails, fetchAdminUsers, updateAdminUser } from '@/lib/api/admin-users.service'
+export {
+  createAdminModelConfig,
+  fetchAdminModelConfigs,
+  updateAdminModelConfig,
+} from '@/lib/api/admin-model-config.service'
+export { fetchAdminPlans } from '@/lib/api/admin-plans.service'
+export {
+  adjustAdminCredits,
+  cancelAdminUserSubscription,
+  changeAdminUserPlan,
+  fetchAdminUserBilling,
+  fetchAdminUserCreditHistory,
+  fetchAdminUserDetails,
+  fetchAdminUsers,
+  updateAdminUser,
+} from '@/lib/api/admin-users.service'
 export {
   createFirebaseSession,
   deleteCurrentSession,
@@ -47,7 +62,19 @@ export {
   saveAuthObject,
 } from '@/lib/api/session-storage'
 export type { FirebaseSessionResponse, SessionAuth, UserRole } from '@/lib/api/auth.service'
+export type { AdminPlan } from '@/lib/api/admin-plans.service'
 export type {
+  AdminModelConfig,
+  CreateAdminModelConfigPayload,
+  ModelProvider,
+  UpdateAdminModelConfigPayload,
+} from '@/lib/api/admin-model-config.service'
+export type {
+  AdjustAdminCreditsPayload,
+  AdminUserBilling,
+  AdminUserBillingInvoice,
+  AdminUserCreditHistoryEntry,
+  ChangeAdminUserPlanPayload,
   AdminUser,
   AdminUserDetails,
   AdminUserSubscription,
