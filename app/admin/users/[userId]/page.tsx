@@ -277,7 +277,7 @@ export default function AdminUserDetailsPage({
     }
 
     setIsPlansLoading(true)
-
+//j
     try {
       const availablePlans = await fetchAdminPlans()
       setPlans(availablePlans)
