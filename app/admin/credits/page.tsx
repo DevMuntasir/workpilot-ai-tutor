@@ -1,11 +1,10 @@
 'use client'
 
-import { type FormEvent, useEffect, useState } from 'react'
+import { Suspense, type FormEvent, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Coins, LoaderCircle, RefreshCw } from 'lucide-react'
-
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,6 +13,27 @@ import { adjustAdminCredits, getApiClientErrorMessage } from '@/lib/api'
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export default function AdminCreditsPage() {
+  return (
+    <Suspense fallback={<AdminCreditsPageFallback />}>
+      <AdminCreditsPageContent />
+    </Suspense>
+  )
+}
+
+function AdminCreditsPageFallback() {
+  return (
+    <section className="p-4 md:p-6">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Adjust Credits</h1>
+        <Card className="border-border/70 shadow-[0_22px_70px_rgba(15,23,42,0.06)]">
+          <CardContent className="py-6 text-sm text-muted-foreground">Loading credit adjustment form...</CardContent>
+        </Card>
+      </div>
+    </section>
+  )
+}
+
+function AdminCreditsPageContent() {
   const searchParams = useSearchParams()
   const [userId, setUserId] = useState('')
   const [amount, setAmount] = useState('')
