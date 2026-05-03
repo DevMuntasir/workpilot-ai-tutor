@@ -57,8 +57,8 @@ export default function AdminLayout({
     const storedAuth = getStoredAuthObject()
 
     if (!storedAuth?.access_token) {
-      clearAuthBrowserState()
-      router.replace('/login')
+      // clearAuthBrowserState()
+      // router.replace('/login')
       return
     }
 

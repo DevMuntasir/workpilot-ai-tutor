@@ -18,6 +18,12 @@ type CreateCheckoutPayload = {
   billingInterval: 'monthly'
 }
 
+type CreateCreditPackCheckoutPayload = {
+  planId: string
+  billingInterval: 'monthly'
+  packId: string
+}
+
 type CreateCheckoutResponse = {
   checkout_url?: string
   session_id?: string
@@ -28,6 +34,10 @@ type CreditBalanceResponse = {
   balance?: unknown
 }
 
+type CreditPackResponse = {
+  data?: unknown
+}
+
 export type SubscriptionPlan = {
   id: string
   code: string
@@ -35,6 +45,15 @@ export type SubscriptionPlan = {
   monthlyCreditAllotment: number | null
   priceMonthly: number | null
   billingIntervals: string[]
+}
+
+export type CreditPack = {
+  id: string
+  code: string
+  name: string
+  credits: number
+  price: number
+  currency: string
 }
 
 export type RecentInvoice = {
@@ -78,6 +97,7 @@ export type CreditBalance = {
 
 const PAYMENTS_SUBSCRIPTION_ENDPOINT = '/api/v1/payments/subscription'
 const PAYMENTS_PLANS_ENDPOINT = '/api/v1/payments/plans'
+const PAYMENTS_PACKS_ENDPOINT = '/api/v1/payments/packs'
 const PAYMENTS_CHECKOUT_ENDPOINT = '/api/v1/payments/create-checkout'
 const PAYMENTS_CANCEL_SUBSCRIPTION_ENDPOINT = '/api/v1/payments/cancel-subscription'
 const CREDITS_BALANCE_ENDPOINT = '/api/v1/credits/balance'
@@ -170,6 +190,34 @@ function normalizePlan(plan: unknown): SubscriptionPlan | null {
     monthlyCreditAllotment: readNumber(record.monthly_credit_allotment),
     priceMonthly: readNumber(record.price_monthly),
     billingIntervals: readStringArray(record.billing_intervals),
+  }
+}
+
+function normalizeCreditPack(pack: unknown): CreditPack | null {
+  const record = asRecord(pack)
+
+  if (!record) {
+    return null
+  }
+
+  const id = readString(record.id)
+  const code = readString(record.code)
+  const name = readString(record.name)
+  const credits = readNumber(record.credits)
+  const price = readNumber(record.price)
+  const currency = readString(record.currency)
+
+  if (!id || !code || !name || credits === null || price === null || !currency) {
+    return null
+  }
+
+  return {
+    id,
+    code,
+    name,
+    credits,
+    price,
+    currency,
   }
 }
 
@@ -278,6 +326,13 @@ export async function fetchSubscriptionPlans() {
     .filter((plan): plan is SubscriptionPlan => Boolean(plan))
 }
 
+export async function fetchCreditPacks() {
+  const response = await apiClient.request<CreditPackResponse>(PAYMENTS_PACKS_ENDPOINT)
+  return asArray(response?.data)
+    .map(normalizeCreditPack)
+    .filter((pack): pack is CreditPack => Boolean(pack))
+}
+
 export async function fetchCurrentSubscription() {
   const response = await apiClient.request<SubscriptionResponse>(PAYMENTS_SUBSCRIPTION_ENDPOINT)
   return normalizeCurrentSubscription(response)
@@ -289,6 +344,32 @@ export async function createSubscriptionCheckout(payload: CreateCheckoutPayload)
     body: {
       plan_id: payload.planId,
       billing_interval: payload.billingInterval,
+    },
+  })
+
+  const responseRecord = asRecord(response)
+  const checkoutRecord = asRecord(responseRecord?.data) ?? responseRecord
+  const checkoutUrl = readString(checkoutRecord?.checkout_url)
+  const sessionId = readString(checkoutRecord?.session_id)
+
+  if (!checkoutUrl || !sessionId) {
+    throw new Error('Checkout session response is incomplete.')
+  }
+
+  return {
+    checkoutUrl,
+    sessionId,
+    expiresAt: readString(checkoutRecord?.expires_at),
+  } satisfies SubscriptionCheckoutSession
+}
+
+export async function createCreditPackCheckout(payload: CreateCreditPackCheckoutPayload) {
+  const response = await apiClient.request<CreateCheckoutResponse>(PAYMENTS_CHECKOUT_ENDPOINT, {
+    method: 'POST',
+    body: {
+      plan_id: payload.planId,
+      billing_interval: payload.billingInterval,
+      pack_id: payload.packId,
     },
   })
 

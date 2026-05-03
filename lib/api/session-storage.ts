@@ -9,6 +9,7 @@ export type StoredAuthObject = {
   refresh_token: string
   refresh_expires_at: string
   user_role?: string
+  user_display_name?: string
 }
 
 const isBrowser = () => typeof window !== 'undefined'
@@ -97,6 +98,7 @@ export function replaceStoredAuthObject(auth: StoredAuthObject) {
   saveAuthObject({
     ...auth,
     user_role: auth.user_role ?? currentAuth?.user_role,
+    user_display_name: auth.user_display_name ?? currentAuth?.user_display_name,
   })
 }
 

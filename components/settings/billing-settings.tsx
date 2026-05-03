@@ -2,17 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { AlertTriangle, CheckCircle2, CreditCard, LoaderCircle, Receipt, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, CreditCard, LoaderCircle, Receipt, ShieldCheck, WalletCards } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import {
   cancelCurrentSubscription,
+  createCreditPackCheckout,
   createSubscriptionCheckout,
+  fetchCreditPacks,
   fetchCurrentSubscription,
   fetchSubscriptionPlans,
   getApiClientErrorMessage,
+  type CreditPack,
   type CurrentSubscription,
   type RecentInvoice,
   type SubscriptionPlan,
@@ -51,6 +55,17 @@ const formatPlanPrice = (value: number | null) => {
     minimumFractionDigits: value % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   })} / month`
+}
+
+const formatPackPrice = (price: number, currency: string) => {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(price)
+  } catch {
+    return `${price} ${currency.toUpperCase()}`
+  }
 }
 
 const formatInvoiceAmount = (invoice: RecentInvoice) => {
@@ -111,10 +126,13 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
   const { toast } = useToast()
   const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null)
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
+  const [creditPacks, setCreditPacks] = useState<CreditPack[]>([])
   const [hasLoaded, setHasLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null)
+  const [checkoutPackId, setCheckoutPackId] = useState<string | null>(null)
+  const [selectedPackByPlan, setSelectedPackByPlan] = useState<Record<string, string>>({})
   const [isCanceling, setIsCanceling] = useState(false)
   const handledBillingStateRef = useRef<string | null>(null)
 
@@ -140,13 +158,15 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
       }
 
       try {
-        const [subscription, availablePlans] = await Promise.all([
+        const [subscription, availablePlans, availableCreditPacks] = await Promise.all([
           fetchCurrentSubscription(),
           fetchSubscriptionPlans(),
+          fetchCreditPacks(),
         ])
 
         setCurrentSubscription(subscription)
         setPlans(availablePlans)
+        setCreditPacks(availableCreditPacks)
         setHasLoaded(true)
 
         return true
@@ -253,6 +273,27 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
       })
     } finally {
       setIsCanceling(false)
+    }
+  }
+
+  const handleBuyCredits = async (plan: SubscriptionPlan, pack: CreditPack) => {
+    setCheckoutPackId(`${plan.id}:${pack.id}`)
+
+    try {
+      const checkoutSession = await createCreditPackCheckout({
+        planId: plan.id,
+        billingInterval: 'monthly',
+        packId: pack.id,
+      })
+
+      window.location.assign(checkoutSession.checkoutUrl)
+    } catch (error) {
+      toast({
+        title: 'Checkout failed',
+        description: getApiClientErrorMessage(error, 'Unable to start credit checkout.'),
+        variant: 'destructive',
+      })
+      setCheckoutPackId(null)
     }
   }
 
@@ -375,6 +416,9 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
                   (!currentSubscription?.planId && currentSubscription?.planCode === plan.code)
                 const supportsMonthly = plan.billingIntervals.includes('monthly')
                 const isCheckingOut = checkoutPlanId === plan.id
+                const selectedPackId = selectedPackByPlan[plan.id] ?? creditPacks[0]?.id ?? ''
+                const selectedPack = creditPacks.find((pack) => pack.id === selectedPackId) ?? null
+                const isBuyingPack = selectedPack ? checkoutPackId === `${plan.id}:${selectedPack.id}` : false
 
                 return (
                   <div key={plan.id} className="rounded-xl border border-border bg-secondary/10 p-5">
@@ -398,14 +442,77 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
                       </p>
                     </div>
 
-                    <Button
-                      className="mt-5 w-full"
-                      onClick={() => void handleUpgrade(plan)}
-                      disabled={isCurrentPlan || !supportsMonthly || isCheckingOut || Boolean(checkoutPlanId)}
-                    >
-                      {isCheckingOut ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                      {isCurrentPlan ? 'Current Plan' : supportsMonthly ? 'Upgrade via Stripe' : 'Monthly unavailable'}
-                    </Button>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <Button
+                        onClick={() => void handleUpgrade(plan)}
+                        disabled={
+                          isCurrentPlan ||
+                          !supportsMonthly ||
+                          isCheckingOut ||
+                          Boolean(checkoutPlanId) ||
+                          Boolean(checkoutPackId)
+                        }
+                      >
+                        {isCheckingOut ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                        {isCurrentPlan ? 'Current Plan' : supportsMonthly ? 'Upgrade via Stripe' : 'Monthly unavailable'}
+                      </Button>
+
+                      <div className="rounded-lg border border-border bg-background/70 p-3 sm:col-span-2">
+                        <div className="flex items-center gap-2">
+                          <WalletCards className="h-4 w-4 text-primary" />
+                          <p className="text-sm font-medium text-foreground">Extra credits</p>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Select a one-time credit pack for this plan.
+                        </p>
+
+                        <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                          <Select
+                            value={selectedPackId}
+                            onValueChange={(value) =>
+                              setSelectedPackByPlan((current) => ({
+                                ...current,
+                                [plan.id]: value,
+                              }))
+                            }
+                            disabled={!supportsMonthly || creditPacks.length === 0 || Boolean(checkoutPlanId) || Boolean(checkoutPackId)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select credit pack" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {creditPacks.map((pack) => (
+                                <SelectItem key={pack.id} value={pack.id}>
+                                  {pack.name} - {formatPackPrice(pack.price, pack.currency)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <Button
+                            variant="outline"
+                            onClick={() => (selectedPack ? void handleBuyCredits(plan, selectedPack) : undefined)}
+                            disabled={
+                              !supportsMonthly ||
+                              !selectedPack ||
+                              isBuyingPack ||
+                              Boolean(checkoutPlanId) ||
+                              Boolean(checkoutPackId)
+                            }
+                          >
+                            {isBuyingPack ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <WalletCards className="h-4 w-4" />}
+                            {isBuyingPack ? 'Redirecting' : 'Buy Credits'}
+                          </Button>
+                        </div>
+
+                        {selectedPack ? (
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            {selectedPack.credits.toLocaleString('en-US')} credits for{' '}
+                            {formatPackPrice(selectedPack.price, selectedPack.currency)}.
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                 )
               })}

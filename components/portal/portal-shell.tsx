@@ -25,6 +25,7 @@ type PortalShellProps = {
   footerPrimaryActionLabel?: string
   footerProfileName?: string
   footerProfileInitial?: string
+  footerProfileSubtitle?: string
 }
 
 export function PortalShell({
@@ -42,6 +43,7 @@ export function PortalShell({
   footerPrimaryActionLabel = 'Upgrade to Unlimited',
   footerProfileName = 'Muntasir',
   footerProfileInitial = 'M',
+  footerProfileSubtitle,
 }: PortalShellProps) {
   return (
     <div className="flex h-screen bg-background">
@@ -104,6 +106,9 @@ export function PortalShell({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-sidebar-foreground truncate">{footerProfileName}</p>
+              {footerProfileSubtitle ? (
+                <p className=" text-[11px] text-sidebar-foreground/70 truncate">{footerProfileSubtitle}</p>
+              ) : null}
             </div>
           </div>
           <button

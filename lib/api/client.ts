@@ -40,6 +40,38 @@ export class ApiClientError extends Error {
   }
 }
 
+function isStoredAuthObject(value: unknown): value is StoredAuthObject {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  return (
+    'token_type' in value &&
+    typeof value.token_type === 'string' &&
+    'access_token' in value &&
+    typeof value.access_token === 'string' &&
+    'expires_at' in value &&
+    typeof value.expires_at === 'string' &&
+    'refresh_token' in value &&
+    typeof value.refresh_token === 'string' &&
+    'refresh_expires_at' in value &&
+    typeof value.refresh_expires_at === 'string'
+  )
+}
+
+function normalizeRefreshAuthPayload(payload: unknown): StoredAuthObject | null {
+  if (isStoredAuthObject(payload)) {
+    return payload
+  }
+
+  if (!payload || typeof payload !== 'object' || !('auth' in payload)) {
+    return null
+  }
+
+  const authPayload = payload.auth
+  return isStoredAuthObject(authPayload) ? authPayload : null
+}
+
 function isBodyInit(body: unknown): body is BodyInit {
   return (
     typeof body === 'string' ||
@@ -145,15 +177,15 @@ export class ApiClient {
     }
 
     if (auth) {
-      await signOut(auth).catch(() => null)
+      // await signOut(auth).catch(() => null)
     }
 
-    clearAuthBrowserState()
-    window.location.replace('/')
+    // clearAuthBrowserState()
+    // window.location.replace('/')
   }
 
   async refreshAccessToken(refreshToken: string) {
-    return this.request<StoredAuthObject>('/api/v1/auth/refresh', {
+    const response = await this.request<unknown>('/api/v1/auth/refresh', {
       method: 'POST',
       body: {
         refresh_token: refreshToken,
@@ -165,6 +197,14 @@ export class ApiClient {
       omitAuthHeader: true,
       retryOnUnauthorized: false,
     })
+
+    const normalizedAuth = normalizeRefreshAuthPayload(response)
+
+    if (!normalizedAuth) {
+      throw new ApiClientError('Refresh token response did not include a valid auth session.')
+    }
+
+    return normalizedAuth
   }
 
   private async refreshStoredSession() {

@@ -13,9 +13,9 @@ export default function DashboardIndexPage() {
     const token = JSON.parse(localStorage.getItem('ai_tutora_auth_session') || 'null');
     console.log(token);
     
-    // if (!token) {
-    //   window.location.href = '/login';
-    // }
+    if (!token) {
+      window.location.href = '/login';
+    }
     setToken(token?.access_token);
   }, [])    
   

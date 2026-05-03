@@ -60,6 +60,7 @@ export default function LoginPage() {
     saveAuthObject({
       ...session.auth,
       user_role: session.user.role,
+      user_display_name: session.user.display_name,
     })
     router.replace(getPortalRouteByRole(session.user.role))
   }
@@ -84,8 +85,10 @@ export default function LoginPage() {
       const firebaseIdToken = await credential.user.getIdToken()
       await createSessionAndRedirect(firebaseIdToken)
     } catch (error) {
-      await signOut(auth).catch(() => null)
-      clearAuthBrowserState()
+      // await signOut(auth).catch(() => null)
+      // clearAuthBrowserState()
+      console.log(error);
+      
       setErrorMessage(getFirebaseAuthErrorMessage(error))
     } finally {
       setIsEmailSigningIn(false)

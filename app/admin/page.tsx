@@ -1,19 +1,26 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+
 export default function AdminPortalPage() {
+    const [token, setToken] = useState<string | null>(null);
+    useEffect(() => {
+      const token = JSON.parse(localStorage.getItem('ai_tutora_auth_session') || 'null');
+      console.log(token);
+      
+      if (!token) {
+        window.location.href = '/login';
+      }
+      setToken(token?.access_token);
+    }, []) 
   return (
-    <section className="p-4 md:p-6">
-      <div className="w-full max-w-2xl rounded-3xl border border-border bg-card p-10 shadow-sm">
-        <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">
-          Admin Portal
-        </p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight text-foreground">
-          Admin UI is pending.
-        </h1>
-        <p className="mt-4 text-base leading-7 text-muted-foreground">
-          Role-based navigation is active. Admin users are routed here from the session endpoint.
-        </p>
-      </div>
-    </section>
+    <div className="min-h-full bg-muted/40 p-4 md:p-6">
+      <Button>
+        <a href={`https://tutor-ai.up.railway.app/api/v1/docs/login?token=${token}`} target="_blank" rel="noopener noreferrer">
+          Api Docs
+        </a>
+      </Button>
+    </div>
   )
 }

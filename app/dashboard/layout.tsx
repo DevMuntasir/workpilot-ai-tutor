@@ -15,13 +15,14 @@ import {
   PenSquare,
   Sparkles,
 } from 'lucide-react'
-import { signOut } from 'firebase/auth'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { PortalShell, type PortalNavItem } from '@/components/portal/portal-shell'
 import { getStoredStudySetById, getStoredStudySets, type StudySet } from '@/components/study-sets/utils'
 import SettingsModal, { type SettingsTab } from '@/components/settings/settings-modal'
+import { fetchCurrentSubscription } from '@/lib/api/billing.service'
 import { apiClient } from '@/lib/api/client'
 import { deleteCurrentSession, getPortalRouteByRole } from '@/lib/api/auth.service'
-import { clearAuthBrowserState, getStoredAuthObject } from '@/lib/api/session-storage'
+import { clearAuthBrowserState, getStoredAuthObject, replaceStoredAuthObject } from '@/lib/api/session-storage'
 import { auth } from '@/lib/firebase'
 
 const sectionIconMap: Record<string, any> = {
@@ -56,6 +57,8 @@ function DashboardLayoutContent({
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>('personalizedAi')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [footerProfileName, setFooterProfileName] = useState('Account')
+  const [footerPlanName, setFooterPlanName] = useState<string | null>(null)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -123,10 +126,68 @@ function DashboardLayoutContent({
       return
     }
 
+    setFooterProfileName(storedAuth.user_display_name?.trim() || auth?.currentUser?.displayName?.trim() || 'Account')
+
     if (storedAuth.user_role === 'admin') {
       router.replace(getPortalRouteByRole(storedAuth.user_role))
     }
   }, [router])
+
+  useEffect(() => {
+    if (!auth) {
+      return
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const displayName = user?.displayName?.trim()
+
+      if (!displayName) {
+        return
+      }
+
+      setFooterProfileName(displayName)
+
+      const storedAuth = getStoredAuthObject()
+
+      if (storedAuth && storedAuth.user_display_name !== displayName) {
+        replaceStoredAuthObject({
+          ...storedAuth,
+          user_display_name: displayName,
+        })
+      }
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    let isCancelled = false
+
+    const loadCurrentSubscription = async () => {
+      try {
+        const subscription = await fetchCurrentSubscription()
+
+        if (isCancelled) {
+          return
+        }
+
+        const resolvedPlanName = subscription.planName?.trim() || subscription.planCode?.trim() || 'Free'
+        setFooterPlanName(resolvedPlanName)
+      } catch {
+        if (!isCancelled) {
+          setFooterPlanName('Free')
+        }
+      }
+    }
+
+    void loadCurrentSubscription()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!isStudySetDetail || !studySetId) {
@@ -207,6 +268,9 @@ function DashboardLayoutContent({
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
         showHeader={!isStudySetDetail}
+        footerProfileName={footerProfileName}
+        footerProfileInitial={footerProfileName.charAt(0).toUpperCase() || 'S'}
+        footerProfileSubtitle={footerPlanName ? `${footerPlanName} plan` : undefined}
       >
         {children}
       </PortalShell>

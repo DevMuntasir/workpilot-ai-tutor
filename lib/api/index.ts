@@ -23,7 +23,9 @@ export {
 } from '@/lib/api/auth.service'
 export {
   cancelCurrentSubscription,
+  createCreditPackCheckout,
   createSubscriptionCheckout,
+  fetchCreditPacks,
   fetchCreditBalance,
   fetchCurrentSubscription,
   fetchSubscriptionPlans,
@@ -83,6 +85,7 @@ export type {
   UpdateAdminUserPayload,
 } from '@/lib/api/admin-users.service'
 export type {
+  CreditPack,
   CreditBalance,
   CurrentSubscription,
   RecentInvoice,
