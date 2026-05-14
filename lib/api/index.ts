@@ -53,6 +53,7 @@ export {
   uploadStudySetPdf,
   uploadStudySetText,
 } from '@/lib/api/study-sets.service'
+export { uploadSyllabusPdf, uploadSyllabusText } from '@/lib/api/syllabus.service'
 export {
   clearAuthBrowserState,
   clearStoredAuthObject,
@@ -118,3 +119,4 @@ export type {
   StudySetUploadResponse,
   StudySetWrittenTestResponse,
 } from '@/lib/api/study-sets.service'
+export type { SyllabusUploadResponse, SyllabusUploadWebsocket } from '@/lib/api/syllabus.service'

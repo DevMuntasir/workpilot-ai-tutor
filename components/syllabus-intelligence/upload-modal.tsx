@@ -3,10 +3,48 @@
 import { useRef, useState } from 'react'
 import { CheckCircle, FileText, Upload, X } from 'lucide-react'
 import {
-  normalizeSyllabusResultPayload,
   persistSyllabusResult,
   type SyllabusIntelligenceResult,
 } from './utils'
+import { waitForSyllabusSummary } from './summary-tracker'
+import { getApiClientErrorMessage, uploadSyllabusPdf, uploadSyllabusText } from '@/lib/api'
+
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
+
+function isPdfFile(file: File) {
+  return file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
+}
+
+function isTextLikeFile(file: File) {
+  return (
+    file.type.startsWith('text/') ||
+    /\.(txt|md|markdown)$/i.test(file.name)
+  )
+}
+
+function isUnsupportedSyllabusFile(file: File) {
+  return !isPdfFile(file) && !isTextLikeFile(file)
+}
+
+function toDateInputValue(value: Date) {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function deriveSemesterDates(semesterWeeksValue: string) {
+  const parsedWeeks = Number.parseInt(semesterWeeksValue, 10)
+  const weeks = Number.isFinite(parsedWeeks) ? Math.max(8, Math.min(24, parsedWeeks)) : 16
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  endDate.setDate(endDate.getDate() + weeks * 7 - 1)
+
+  return {
+    semesterStartDate: toDateInputValue(startDate),
+    semesterEndDate: toDateInputValue(endDate),
+  }
+}
 
 interface SyllabusUploadModalProps {
   onClose: () => void
@@ -20,19 +58,32 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
   const [title, setTitle] = useState('')
   const [semesterWeeks, setSemesterWeeks] = useState('16')
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(event.target.files || [])
-    const valid = selected.filter((file) => file.size <= 20 * 1024 * 1024)
+    const valid = selected.filter((file) => file.size <= MAX_FILE_SIZE_BYTES)
     setFiles(valid)
+    setErrorMessage('')
   }
 
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault()
     const dropped = Array.from(event.dataTransfer.files || [])
-    const valid = dropped.filter((file) => file.size <= 20 * 1024 * 1024)
+    const valid = dropped.filter((file) => file.size <= MAX_FILE_SIZE_BYTES)
     setFiles(valid)
+    setErrorMessage('')
+  }
+
+  const resolveSelectedFile = () => {
+    const supportedFile = files.find((file) => !isUnsupportedSyllabusFile(file))
+
+    if (!supportedFile) {
+      throw new Error('Only PDF and TXT files are supported for syllabus analysis.')
+    }
+
+    return supportedFile
   }
 
   const canSubmit =
@@ -43,39 +94,59 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
     if (!canSubmit) return
 
     setIsLoading(true)
+    setErrorMessage('')
     try {
-      const formData = new FormData()
-      formData.append('title', title || 'Untitled Syllabus')
-      formData.append('semesterWeeks', semesterWeeks || '16')
+      const resolvedTitle = title.trim() || 'Untitled Syllabus'
+      const { semesterStartDate, semesterEndDate } = deriveSemesterDates(semesterWeeks)
+
+      let uploadResponse
 
       if (inputMode === 'file') {
-        files.forEach((file) => formData.append('files', file))
+        const selectedFile = resolveSelectedFile()
+
+        if (isPdfFile(selectedFile)) {
+          uploadResponse = await uploadSyllabusPdf({
+            title: resolvedTitle,
+            file: selectedFile,
+            semesterStartDate,
+            semesterEndDate,
+          })
+        } else if (isTextLikeFile(selectedFile)) {
+          const fileText = await selectedFile.text()
+
+          if (!fileText.trim()) {
+            throw new Error('The selected text file is empty.')
+          }
+
+          uploadResponse = await uploadSyllabusText({
+            title: resolvedTitle,
+            text: fileText,
+            semesterStartDate,
+            semesterEndDate,
+          })
+        } else {
+          throw new Error('Only PDF and TXT files are supported for syllabus analysis.')
+        }
       } else {
-        formData.append('text', text)
+        uploadResponse = await uploadSyllabusText({
+          title: resolvedTitle,
+          text,
+          semesterStartDate,
+          semesterEndDate,
+        })
       }
 
-      const response = await fetch('/api/syllabus-intelligence/analyze', {
-        method: 'POST',
-        body: formData,
+      const normalized = await waitForSyllabusSummary({
+        syllabusId: uploadResponse.syllabus_id,
+        websocket: uploadResponse.websocket,
+        titleFallback: resolvedTitle,
       })
-
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => ({}))
-        throw new Error(errorPayload?.error || 'Failed to analyze syllabus')
-      }
-
-      const payload = await response.json()
-      const normalized = normalizeSyllabusResultPayload(payload?.result ?? payload, title)
-
-      if (!normalized) {
-        throw new Error('Unexpected response from syllabus analysis')
-      }
 
       persistSyllabusResult(normalized)
       onSuccess(normalized)
     } catch (error) {
       console.error('Error analyzing syllabus:', error)
-      alert(error instanceof Error ? error.message : 'Failed to analyze syllabus')
+      setErrorMessage(getApiClientErrorMessage(error, 'Failed to analyze syllabus.'))
     } finally {
       setIsLoading(false)
     }
@@ -174,12 +245,21 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
                       className="rounded-lg bg-secondary/40 p-3 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <CheckCircle
+                          className={`w-5 h-5 flex-shrink-0 ${
+                            isUnsupportedSyllabusFile(file) ? 'text-amber-500' : 'text-green-500'
+                          }`}
+                        />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
+                          {isUnsupportedSyllabusFile(file) ? (
+                            <p className="text-xs text-amber-600">
+                              Unsupported for backend analysis. Use PDF or TXT.
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -201,6 +281,8 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
               <p className="text-xs text-muted-foreground">{text.length} characters</p>
             </>
           )}
+
+          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
         </div>
 
         <div className="p-6 border-t border-border flex gap-3">
