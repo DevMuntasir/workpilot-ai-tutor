@@ -1,26 +1,12 @@
 'use client'
 
-import {
-  ArrowRight
-} from 'lucide-react'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 
 
-
-
-
-
-
-
-
-
-
 export default function AdminPortalPage() {
   const [token, setToken] = useState<string | null>(null)
-
   useEffect(() => {
     const storedAuth = JSON.parse(localStorage.getItem('ai_tutora_auth_session') || 'null')
     setToken(storedAuth?.access_token ?? null)
