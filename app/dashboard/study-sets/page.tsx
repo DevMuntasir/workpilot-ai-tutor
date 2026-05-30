@@ -63,7 +63,7 @@ export default function StudySetsPage() {
                 </div>
                 <div>
                   <p className="font-bold text-slate-900">Upload File</p>
-                  <p className="text-sm text-slate-500">PDF, image, audio, video</p>
+                  <p className="text-sm text-slate-500">PDF, image, video</p>
                 </div>
               </button>
 
@@ -76,7 +76,7 @@ export default function StudySetsPage() {
                 </div>
                 <div>
                   <p className="font-bold text-slate-900">Paste Content</p>
-                  <p className="text-sm text-slate-500">YouTube, website, text</p>
+                  <p className="text-sm text-slate-500">Paste you text here.</p>
                 </div>
               </button>
             </div>
