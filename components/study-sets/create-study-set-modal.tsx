@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Edit3, FileText, GraduationCap, Headphones, Layers, ListChecks, PenSquare, Upload, X } from 'lucide-react'
 import { getApiClientErrorMessage } from '@/lib/api/client'
-import { saveStudySetGenerationMeta, saveStudySetUploadMeta, type StoredStudySetGenerationMeta } from '@/lib/api/study-sets.storage'
+import { saveStudySetGenerationMeta, saveStudySetUploadMeta } from '@/lib/api/study-sets.storage'
 import { generateStudySet, type StudySetUploadResponse, uploadStudySetPdf, uploadStudySetText } from '@/lib/api/study-sets.service'
-import { ensureStudySetGenerationTracking, subscribeToStudySetGeneration } from './generation-tracker'
-import { GenerationStatusStep } from './generation-status-step'
+import { ensureStudySetGenerationTracking } from './generation-tracker'
 import { type StudySetUiSectionType, uiToBackendGenerationType, uiSectionTypeLabels } from './generation-mapping'
 import { createUploadPlaceholderStudySet } from './upload-placeholder'
 import { persistStudySet } from './utils'
@@ -40,7 +39,7 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [sourceType, setSourceType] = useState<SourceType>(initialSource)
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2>(1)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [content, setContent] = useState('')
   const [studySetName, setStudySetName] = useState('')
@@ -49,7 +48,6 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
   const [isGenerating, setIsGenerating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [uploadedResponse, setUploadedResponse] = useState<StudySetUploadResponse | null>(null)
-  const [generationMeta, setGenerationMeta] = useState<StoredStudySetGenerationMeta | null>(null)
 
   const hasValidPdf = Boolean(selectedFile && selectedFile.type === 'application/pdf' && selectedFile.size <= 10 * 1024 * 1024)
   const hasValidText = content.trim().length >= 50
@@ -153,9 +151,9 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
           updatedAt: uploadedResponse.document.updatedAt,
         }),
       )
-      setGenerationMeta(nextMeta)
-      setStep(3)
       ensureStudySetGenerationTracking(uploadedResponse.document.id)
+      onClose()
+      router.push(`/dashboard/study-sets/${uploadedResponse.document.id}`)
     } catch (error) {
       setErrorMessage(getApiClientErrorMessage(error, 'Failed to start generation.'))
     } finally {
@@ -163,19 +161,6 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
     }
   }
 
-  useEffect(() => {
-    if (step !== 3 || !uploadedResponse?.document.id) return
-    return subscribeToStudySetGeneration(uploadedResponse.document.id, (nextMeta) => {
-      setGenerationMeta(nextMeta)
-    })
-  }, [step, uploadedResponse?.document.id])
-
-  const onOpenGeneratedSection = (sectionType: StudySetUiSectionType) => {
-    const documentId = generationMeta?.documentId ?? uploadedResponse?.document.id
-    if (!documentId) return
-    onClose()
-    router.push(`/dashboard/study-sets/${documentId}?mode=${sectionType}`)
-  }
 
   const applyPreset = (outputs: OutputType[]) => setSelectedOutputs(outputs)
   const toggleOutput = (id: OutputType) =>
@@ -192,7 +177,7 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
       <div className="max-h-screen w-full max-w-3xl overflow-y-auto rounded-2xl bg-card shadow-2xl">
         <div className="flex items-start justify-between border-b border-border p-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step {step} of 3</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step {step} of 2</p>
             <h2 className="text-2xl font-bold text-foreground">Create Study Set</h2>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary">
@@ -302,7 +287,6 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
             </div>
           ) : null}
 
-          {step === 3 ? <GenerationStatusStep meta={generationMeta} onOpenSection={onOpenGeneratedSection} /> : null}
         </div>
 
         {errorMessage ? (
@@ -325,10 +309,10 @@ export default function CreateStudySetModal({ onClose, initialSource = 'pdf' }: 
           <button
             type="button"
             onClick={() => void primaryAction()}
-            disabled={step === 1 ? !canContinueSource || isUploading : step === 2 ? !selectedOutputs.length || isGenerating : generationMeta?.batch.status !== 'completed'}
+            disabled={step === 1 ? !canContinueSource || isUploading : !selectedOutputs.length || isGenerating}
             className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {step === 1 ? (isUploading ? 'Uploading...' : 'Next') : step === 2 ? (isGenerating ? 'Generating...' : 'Generate') : generationMeta?.batch.status === 'completed' ? 'Done' : 'Tracking...'}
+            {step === 1 ? (isUploading ? 'Uploading...' : 'Next') : (isGenerating ? 'Generating...' : 'Generate')}
           </button>
         </div>
       </div>
