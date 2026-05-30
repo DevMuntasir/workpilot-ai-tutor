@@ -1,47 +1,55 @@
+"use client";
+
 import React from "react";
-import { Check } from "lucide-react";
+import { motion, type Variants } from "framer-motion";
+import { Check, Sparkles } from "lucide-react";
 
 const plans = [
     {
         name: "Starter",
-        description: "For small businesses and startups",
+        description: "Perfect for getting started",
         price: "$19",
         period: "Per month",
         featured: false,
+        gradient: "from-blue-500 to-cyan-500",
         features: [
             "3M AI Credits",
             "20 Hours of platform credits",
             "10 Projects",
-            "Access to all Pro Component Blocks",
-            "Access to all Pro Templates",
+            "Community support",
+            "Basic dashboard",
         ],
     },
     {
         name: "Premium",
-        description: "For growing businesses",
+        description: "Most popular choice",
         price: "$49",
         period: "Per month",
         featured: true,
+        gradient: "from-purple-500 to-pink-500",
         features: [
             "8M AI Credits",
             "50 Hours of Platform Credits",
             "20 Projects",
-            "Access to all Pro Component Blocks",
-            "Access to all Pro Templates",
+            "Priority support",
+            "Advanced analytics",
+            "Custom integrations",
         ],
     },
     {
         name: "Business",
-        description: "For established businesses",
+        description: "For power users",
         price: "$99",
         period: "Per month",
         featured: false,
+        gradient: "from-orange-500 to-red-500",
         features: [
             "20M AI Credits",
             "75 Hours of Platform Credits",
             "Unlimited Projects",
-            "Access to all Pro Component Blocks",
-            "Access to all Pro Templates",
+            "Dedicated support",
+            "Custom features",
+            "API access",
         ],
     },
 ];
@@ -49,143 +57,262 @@ const plans = [
 const enterpriseFeatures = [
     "Unlimited projects",
     "No capping on tokens",
-    "No capping on sandbox usage",
-    "Team support",
-    "Invite members",
-    "Custom user roles",
-    "Custom invoicing",
-    "Standard security features",
+    "Dedicated account manager",
+    "24/7 Premium support",
+    "Custom integrations",
+    "Advanced security features",
+    "SLA guarantees",
+    "Custom training",
 ];
 
-function FeatureItem({ children }) {
+const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2,
+        },
+    },
+};
+
+const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.6,
+            ease: "easeOut",
+        },
+    },
+};
+
+type Plan = {
+    name: string;
+    description: string;
+    price: string;
+    period: string;
+    featured: boolean;
+    gradient: string;
+    features: string[];
+};
+
+function FeatureItem({
+    children,
+    dark = false,
+}: {
+    children: React.ReactNode;
+    dark?: boolean;
+}) {
     return (
-        <div className="my-5 flex items-start justify-start gap-2">
-            <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-neutral-700">
-                <Check className="h-3 w-3 stroke-[4px] text-neutral-300" />
+        <div className="my-3 flex items-start justify-start gap-3">
+            <div
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                    dark ? "bg-white/20" : "bg-thirdary/10"
+                }`}
+            >
+                <Check
+                    className={`h-3 w-3 stroke-[3px] ${dark ? "text-white" : "text-thirdary"}`}
+                />
             </div>
-            <div className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+            <div
+                className={`text-sm font-medium ${dark ? "text-white/85" : "text-slate-600"}`}
+            >
                 {children}
             </div>
         </div>
     );
 }
 
-function PlanCard({ plan }) {
+function PlanCard({ plan }: { plan: Plan }) {
+    const isHighlighted = plan.featured;
+
     return (
-        <div
-            className={[
-                "rounded-sm p-1 sm:p-2 md:p-3",
-                plan.featured
-                    ? "border border-transparent bg-white shadow ring shadow-black/10 ring-black/5 dark:bg-neutral-800"
-                    : "bg-transparent dark:bg-neutral-950",
-            ].join(" ")}
+        <motion.div
+            variants={itemVariants}
+            whileHover={{ y: -8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 22 }}
+            className={`group h-full ${isHighlighted ? "lg:-mt-4 lg:mb-4" : ""}`}
         >
-            <div className="flex h-full flex-col justify-start gap-1 p-4">
-                <div className="flex items-start justify-between">
-                    <div className="flex flex-col gap-1">
-                        <p className="text-base font-medium text-black sm:text-lg dark:text-white">
-                            {plan.name}
-                        </p>
+            <div
+                className={`relative h-full rounded-3xl overflow-hidden transition-all duration-300 ${
+                    isHighlighted
+                        ? "bg-gradient-to-br from-button via-thirdary to-primary text-white shadow-[0_25px_60px_rgba(81,0,167,0.30)]"
+                        : "bg-white border border-slate-200/70 shadow-[0_10px_35px_rgba(15,23,42,0.05)] group-hover:border-slate-300 group-hover:shadow-[0_25px_60px_rgba(15,23,42,0.10)]"
+                }`}
+            >
+                {isHighlighted && (
+                    <>
+                        <div className="absolute inset-0 opacity-[0.12] mix-blend-overlay bg-[radial-gradient(circle,white_1px,transparent_1px)] bg-[length:20px_20px]" />
+                        <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+                    </>
+                )}
+
+                <div className="relative z-10 p-6 sm:p-8 flex flex-col h-full">
+                    <div className="mb-6 flex items-start justify-between gap-3">
+                        <div>
+                            <h3
+                                className={`text-xl sm:text-2xl font-semibold mb-1.5 tracking-tight ${
+                                    isHighlighted ? "text-white" : "text-slate-900"
+                                }`}
+                            >
+                                {plan.name}
+                            </h3>
+                            <p
+                                className={`text-sm ${
+                                    isHighlighted ? "text-white/70" : "text-slate-500"
+                                }`}
+                            >
+                                {plan.description}
+                            </p>
+                        </div>
+                        {isHighlighted && (
+                            <span className="shrink-0 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white">
+                                Popular
+                            </span>
+                        )}
                     </div>
-                </div>
 
-                <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                    {plan.description}
-                </p>
-
-                <div className="my-6">
-                    <div className="flex items-end">
-                        <div className="flex items-start gap-1">
-                            <span className="text-3xl font-medium text-neutral-800 md:text-4xl dark:text-neutral-50">
+                    <div className="mb-8">
+                        <div className="flex items-baseline gap-1">
+                            <span
+                                className={`text-4xl sm:text-5xl font-semibold tracking-tight ${
+                                    isHighlighted ? "text-white" : "text-slate-900"
+                                }`}
+                            >
                                 {plan.price}
+                            </span>
+                            <span
+                                className={`text-sm ${
+                                    isHighlighted ? "text-white/70" : "text-slate-500"
+                                }`}
+                            >
+                                /mo
                             </span>
                         </div>
                     </div>
-                    <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {plan.period}
-                    </span>
+
+                    <motion.button
+                        className={`w-full mb-8 px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                            isHighlighted
+                                ? "bg-white text-thirdary hover:bg-white/90 shadow-lg"
+                                : "bg-slate-900 text-white hover:bg-slate-800"
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
+                        Get Started
+                    </motion.button>
+
+                    <div className="space-y-0 flex-grow">
+                        {plan.features.map((feature) => (
+                            <FeatureItem key={feature} dark={isHighlighted}>
+                                {feature}
+                            </FeatureItem>
+                        ))}
+                    </div>
                 </div>
-
-                <button
-                    className={[
-                        "mt-4 mb-2 w-full cursor-pointer rounded-sm px-2 py-1.5 transition duration-200 active:scale-[0.98] md:w-full border border-transparent shadow ring shadow-black/15 ring-black/10",
-                        plan.featured
-                            ? "bg-black text-white dark:bg-white dark:text-black"
-                            : "bg-white dark:bg-neutral-900",
-                    ].join(" ")}
-                >
-                    Get Started
-                </button>
-
-                <div className="mt-1">
-                    {plan.features.map((feature) => (
-                        <FeatureItem key={feature}>{feature}</FeatureItem>
-                    ))}
-                </div>
-
-                <div className="p-3" />
             </div>
-        </div>
+        </motion.div>
     );
 }
 
 export default function PricingSection() {
     return (
-        <div className="relative mx-auto my-12 flex w-full max-w-7xl flex-1 flex-col px-4 py-0 sm:my-10 md:my-20 lg:px-4">
-            <h1 className="pt-4 text-center text-2xl font-bold tracking-tight text-neutral-800 md:text-4xl dark:text-neutral-100">
-                Choose your Pricing Plan
-            </h1>
+        <section className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-background overflow-hidden">
+            <div className="absolute left-[-5rem] top-32 h-72 w-72 rounded-full bg-thirdary/10 blur-3xl" />
+            <div className="absolute right-[-4rem] bottom-24 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
 
-            <p className="mx-auto mt-4 max-w-md text-center text-base text-neutral-600 dark:text-neutral-300">
-                Get started with our flexible pricing plans designed to scale with your
-                business needs.
-            </p>
+            <div className="relative max-w-7xl mx-auto">
+                <motion.div
+                    className="text-center mb-14 sm:mb-16 max-w-2xl mx-auto"
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <motion.span
+                        className="inline-flex items-center gap-2 rounded-full border border-thirdary/15 bg-white/85 px-4 py-1.5 text-xs sm:text-sm font-medium text-thirdary shadow-[0_10px_35px_rgba(15,23,42,0.06)] backdrop-blur mb-6"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.1 }}
+                    >
+                        <Sparkles className="h-4 w-4" />
+                        Flexible Pricing
+                    </motion.span>
+                    <motion.h2
+                        className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-5 text-slate-950 tracking-[-0.03em] leading-[1.1]"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                        Simple, transparent{" "}
+                        <span className="bg-gradient-to-r from-button via-thirdary to-primary bg-clip-text text-transparent">
+                            pricing
+                        </span>
+                    </motion.h2>
+                    <motion.p
+                        className="text-slate-600 text-base sm:text-lg leading-relaxed"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                    >
+                        Choose the perfect plan for your learning journey. No hidden fees, cancel anytime.
+                    </motion.p>
+                </motion.div>
 
-            <div className="py-4 md:py-10">
-                <div className="grid w-full grid-cols-1 gap-2 p-4 sm:gap-3 md:grid-cols-2 md:gap-4 md:p-8 lg:grid-cols-3">
+                <motion.div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-16 items-stretch"
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.1 }}
+                >
                     {plans.map((plan) => (
                         <PlanCard key={plan.name} plan={plan} />
                     ))}
+                </motion.div>
 
-                    <div className="col-span-1 mt-8 md:col-span-2 lg:col-span-3">
-                        <div className="relative overflow-hidden rounded-sm border border-neutral-200 p-6 md:p-8 dark:border-neutral-800">
-                            <div className="grid grid-cols-1 gap-20 lg:grid-cols-3">
-                                <div className="lg:col-span-1">
-                                    <h3 className="mb-2 text-base font-medium text-neutral-900 md:text-2xl dark:text-neutral-100">
-                                        Plan for organizations
-                                    </h3>
-                                    <p className="mb-6 text-sm text-neutral-600 md:text-sm dark:text-neutral-400">
-                                        Need custom solutions, dedicated support, or volume pricing?
-                                        Let&apos;s discuss a plan tailored specifically for your
-                                        organization.
-                                    </p>
-                                    <button className="w-full rounded-sm bg-white px-6 py-3 font-medium text-black shadow-lg ring-1 ring-black/10 transition-colors hover:bg-neutral-100 sm:w-auto dark:bg-white dark:text-black dark:ring-white/10 dark:hover:bg-neutral-200">
-                                        Contact Sales
-                                    </button>
-                                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="relative"
+                >
+                    <div className="rounded-3xl border border-slate-200/70 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.05)] overflow-hidden p-8 sm:p-12">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12">
+                            <div className="lg:col-span-1">
+                                <h3 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-3 tracking-tight">
+                                    Enterprise Plan
+                                </h3>
+                                <p className="text-slate-600 mb-6 text-sm leading-relaxed">
+                                    Unlock unlimited possibilities with our custom enterprise solution. Get dedicated support and features tailored to your needs.
+                                </p>
+                                <motion.button
+                                    className="w-full sm:w-auto px-8 py-3 rounded-full bg-gradient-to-r from-button to-thirdary text-white font-semibold shadow-lg hover:-translate-y-0.5 transition-transform duration-300"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    Contact Sales
+                                </motion.button>
+                            </div>
 
-                                <div className="lg:col-span-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-3">
-                                        {enterpriseFeatures.map((feature) => (
-                                            <div
-                                                key={feature}
-                                                className="my-2 flex items-start justify-start gap-2"
-                                            >
-                                                <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-neutral-700">
-                                                    <Check className="h-3 w-3 stroke-[4px] text-neutral-300" />
-                                                </div>
-                                                <div className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-                                                    {feature}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                            <div className="lg:col-span-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                                    {enterpriseFeatures.map((feature) => (
+                                        <FeatureItem key={feature}>{feature}</FeatureItem>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </section>
     );
 }

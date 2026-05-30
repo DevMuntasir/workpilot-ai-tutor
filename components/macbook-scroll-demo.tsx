@@ -1,25 +1,55 @@
+"use client";
+
 import React from "react";
+import { motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { MacbookScroll } from "@/components/ui/macbook-scroll";
 
 export default function MacbookScrollDemo() {
   return (
-    <div className="w-full overflow-hidden bg-white dark:bg-[#0B0B0F]">
-      <MacbookScroll
-        title={
-          <span>
-            Advance your learning with our interactive dashboard. 
+    <section className="relative w-full overflow-hidden bg-background py-16 sm:py-20">
+      <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-thirdary/10 blur-3xl" />
+      <div className="absolute right-[-4rem] top-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
 
-          </span>
-        }
-        badge={
-          <a href="https://peerlist.io/manuarora">
-            <Badge className="h-10 w-10 -rotate-12 transform" />
-          </a>
-        }
-        src={`https://cdn.prod.website-files.com/693d6199445bec13b5fc4ea3/693e9b82ca9dd3218690dd2e_Ellipse%2040.avif`}
-        showGradient={false}
-      />
-    </div>
+      <div className="relative z-10">
+        <motion.div
+          className="text-center mb-4 px-4 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.span
+            className="inline-flex items-center gap-2 rounded-full border border-thirdary/15 bg-white/85 px-4 py-1.5 text-xs sm:text-sm font-medium text-thirdary shadow-[0_10px_35px_rgba(15,23,42,0.06)] backdrop-blur mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Sparkles className="h-4 w-4" />
+            Powerful Dashboard
+          </motion.span>
+        </motion.div>
+
+        <MacbookScroll
+          title={
+            <span className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-[-0.03em] text-slate-950">
+              Master your learning with an{" "}
+              <span className="bg-gradient-to-r from-button via-thirdary to-primary bg-clip-text text-transparent">
+                intuitive dashboard
+              </span>
+            </span>
+          }
+            badge={
+              <a href="https://peerlist.io/manuarora">
+                <Badge className="h-10 w-10 -rotate-12 transform" />
+              </a>
+            }
+            src={`https://cdn.prod.website-files.com/693d6199445bec13b5fc4ea3/693e9b82ca9dd3218690dd2e_Ellipse%2040.avif`}
+            showGradient={false}
+          />
+      </div>
+    </section>
   );
 }
 // Peerlist logo
