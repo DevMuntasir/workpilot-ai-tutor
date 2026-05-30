@@ -208,7 +208,6 @@ export default function Hero() {
           className="w-full flex-1 lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]"
         >
           <div className="hero-animate-float relative mx-auto aspect-[29/26] w-full max-w-[24rem] sm:max-w-[28rem] lg:max-w-none">
-            {/* Glow behind the product */}
             {/* <div className="absolute inset-6 -z-10 rounded-[3rem] bg-gradient-to-tr from-primary/30 via-thirdary/20 to-primary/30 blur-3xl" /> */}
             <Image
               src="/demo-1.png"
