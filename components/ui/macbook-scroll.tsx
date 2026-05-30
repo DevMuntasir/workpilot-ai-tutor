@@ -68,14 +68,14 @@ export const MacbookScroll = ({
   return (
     <div
       ref={ref}
-      className="flex min-h-[200vh] shrink-0 scale-[0.35] transform flex-col items-center justify-start py-0 [perspective:800px] sm:scale-50 md:scale-100 "
+      className="flex min-h-[140vh] shrink-0 scale-[0.45] transform flex-col items-center justify-start py-0 [perspective:800px] sm:min-h-[180vh] sm:scale-[0.6] md:min-h-[200vh] md:scale-100"
     >
       <motion.h2
         style={{
           translateY: textTransform,
           opacity: textOpacity,
         }}
-        className="mb-20 text-center text-3xl font-bold text-black dark:text-white"
+        className="mb-10 text-center text-3xl font-bold text-black md:mb-20 dark:text-white"
       >
         {title || (
           <span>
@@ -168,7 +168,7 @@ export const Lid = ({
         <img
           src={src as string}
           alt="aceternity logo"
-          className="absolute inset-0 h-full w-full rounded-lg object-cover object-left-top"
+          className="absolute inset-0 h-full w-full rounded-lg object-cover object-top"
         />
       </motion.div>
     </div>

@@ -239,7 +239,7 @@ export default function PricingSection() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.1 }}
                     >
-                        <Sparkles className="h-4 w-4" />
+                       
                         Flexible Pricing
                     </motion.span>
                     <motion.h2

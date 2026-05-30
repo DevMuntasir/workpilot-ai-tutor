@@ -17,10 +17,10 @@ export default function LandingPage() {
             <BackgroundRipple />
             <div className=" w-full">
               <Hero />
-              <BrandScrollVelocitySection />
-              <MacbookScrollDemo />
+              {/* <MacbookScrollDemo /> */}
               <FeaturesSection />
               <PricingSection />
+              <BrandScrollVelocitySection />
               <Footer />
             </div>
           </div>
