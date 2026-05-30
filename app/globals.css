@@ -125,6 +125,28 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -167,6 +189,90 @@
     -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
   }
   
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0);
+  }
+}
+
+@keyframes hero-blob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(24px, -18px, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-18px, 12px, 0) scale(0.96);
+  }
+}
+
+@keyframes hero-spotlight {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate3d(0, -10px, 0) scale(1.06);
+  }
+}
+
+@keyframes hero-shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes hero-grid-pan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 48px 48px;
+  }
+}
+
+@layer utilities {
+  .hero-animate-float {
+    animation: hero-float 7s ease-in-out infinite;
+  }
+  .hero-animate-blob {
+    animation: hero-blob 16s ease-in-out infinite;
+  }
+  .hero-animate-spotlight {
+    animation: hero-spotlight 9s ease-in-out infinite;
+  }
+  .hero-grid {
+    background-image: linear-gradient(to right, rgba(91, 101, 224, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(91, 101, 224, 0.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: hero-grid-pan 24s linear infinite;
+  }
+  .hero-gradient-text {
+    background-size: 200% auto;
+    animation: hero-shine 5s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-animate-float,
+    .hero-animate-blob,
+    .hero-animate-spotlight,
+    .hero-grid,
+    .hero-gradient-text {
+      animation: none !important;
+    }
+  }
 }
 
 @keyframes marquee-left {

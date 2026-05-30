@@ -101,7 +101,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         damping: 50,
       }}
       style={{
-        minWidth: "1000px",
+        minWidth: "1100px",
       }}
       className={cn(
         "relative z-[60] mx-auto hidden w-full max-w-7xl h-[70px] flex-row items-center justify-between self-start rounded-full bg-transparent px-4 py-2 lg:flex dark:bg-transparent",
@@ -237,8 +237,8 @@ export const NavbarLogo = () => {
       href="#"
       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
     >
-      <div className="text-2xl flex font-bold  ">
-        <Image src='/icon.png' alt="WorkPilot.AI" width={30} height={30} />
+      <div className="text-3xl flex font-bold  ">
+        {/* <Image src='/icon.png' alt="WorkPilot.AI" width={30} height={30} /> */}
         workpilot
       </div>
     </a>
