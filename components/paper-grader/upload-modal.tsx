@@ -1,206 +1,263 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { X, Upload, Trash2, CheckCircle } from 'lucide-react'
+import { X, Upload, Trash2, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface GraderUploadModalProps {
   onClose: () => void
-  onSuccess: (result: any) => void
+  onSuccess: (submissionId: string, title: string) => void
 }
 
 export default function GraderUploadModal({
   onClose,
   onSuccess,
 }: GraderUploadModalProps) {
-  const [files, setFiles] = useState<File[]>([])
-  const [content, setContent] = useState('')
-  const [inputMode, setInputMode] = useState<'file' | 'text'>('file')
+  const [assignmentFile, setAssignmentFile] = useState<File | null>(null)
+  const [rubricFile, setRubricFile] = useState<File | null>(null)
+  const [title, setTitle] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState('')
+  const assignmentInputRef = useRef<HTMLInputElement>(null)
+  const rubricInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || [])
-    const validFiles = selectedFiles.filter(
-      (file) =>
-        file.size <= 50 * 1024 * 1024 && // 50MB limit
-        ['application/pdf', 'text/plain'].includes(file.type)
-    )
-    setFiles(validFiles)
+  const handleAssignmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.size <= 50 * 1024 * 1024) {
+      setAssignmentFile(file)
+      setError('')
+    } else {
+      setError('File must be less than 50MB')
+    }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleRubricSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.size <= 50 * 1024 * 1024) {
+      setRubricFile(file)
+      setError('')
+    } else {
+      setError('File must be less than 50MB')
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent, type: 'assignment' | 'rubric') => {
     e.preventDefault()
-    const droppedFiles = Array.from(e.dataTransfer.files || [])
-    const validFiles = droppedFiles.filter(
-      (file) =>
-        file.size <= 50 * 1024 * 1024 &&
-        ['application/pdf', 'text/plain'].includes(file.type)
-    )
-    setFiles(validFiles)
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.size <= 50 * 1024 * 1024) {
+      if (type === 'assignment') {
+        setAssignmentFile(file)
+      } else {
+        setRubricFile(file)
+      }
+      setError('')
+    } else {
+      setError('File must be less than 50MB')
+    }
   }
 
-  const handleGrade = async () => {
-    if ((inputMode === 'file' && files.length === 0) || (inputMode === 'text' && !content.trim()))
+  const handleSubmit = async () => {
+    if (!assignmentFile || !rubricFile || !title.trim()) {
+      setError('Please fill in all required fields')
       return
+    }
 
     setIsLoading(true)
+    setError('')
+
     try {
       const formData = new FormData()
+      formData.append('assignment_file', assignmentFile)
+      formData.append('rubric_file', rubricFile)
+      formData.append('title', title.trim())
 
-      if (inputMode === 'file') {
-        files.forEach((file) => {
-          formData.append('files', file)
-        })
-      } else {
-        formData.append('text', content)
-      }
-
-      const response = await fetch('/api/paper-grader/grade', {
+      const response = await fetch('/api/v1/grader/submit', {
         method: 'POST',
         body: formData,
       })
 
-      if (!response.ok) throw new Error('Failed to grade paper')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to submit assignment')
+      }
 
       const data = await response.json()
-      onSuccess(data.result)
-    } catch (error) {
-      console.error('Error grading paper:', error)
-      alert('Failed to grade paper. Please try again.')
+      onSuccess(data.submission_id, title.trim())
+    } catch (err) {
+      console.error('Error submitting assignment:', err)
+      setError(err instanceof Error ? err.message : 'Failed to submit assignment')
     } finally {
       setIsLoading(false)
     }
   }
 
+  const isValid = assignmentFile && rubricFile && title.trim().length > 0
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+      <div className="bg-card rounded-2xl max-w-2xl w-full max-h-screen overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">Grade Your Paper</h2>
+          <h2 className="text-xl font-bold text-foreground">Submit Assignment for Grading</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-secondary rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Input Mode Selector */}
-        <div className="flex border-b border-border">
-          <button
-            onClick={() => setInputMode('file')}
-            className={`flex-1 py-3 px-4 font-medium transition-colors ${
-              inputMode === 'file'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Upload PDF/File
-          </button>
-          <button
-            onClick={() => setInputMode('text')}
-            className={`flex-1 py-3 px-4 font-medium transition-colors ${
-              inputMode === 'text'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Paste Text
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {inputMode === 'file' ? (
-            <>
-              <p className="text-muted-foreground">
-                Upload a PDF or text file of your paper or essay
-              </p>
+          {/* Title Input */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Submission Title <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value)
+                if (error) setError('')
+              }}
+              placeholder="e.g., Psychology Essay Assignment 1"
+              className="w-full px-4 py-2.5 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+            />
+          </div>
 
-              {/* File Upload Area */}
-              <div
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/30"
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  accept=".pdf,text/plain"
-                  className="hidden"
-                />
-                <Upload className="w-12 h-12 text-primary mx-auto mb-3" />
-                <p className="font-semibold text-foreground mb-1">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  PDF or TXT files (Max 50MB)
-                </p>
-              </div>
-
-              {/* File Display */}
-              {files.length > 0 && (
-                <div className="p-3 bg-secondary/50 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {files[0].name}
+          {/* Assignment File */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Assignment File <span className="text-destructive">*</span>
+            </label>
+            <div
+              onDrop={(e) => handleDrop(e, 'assignment')}
+              onDragOver={(e) => e.preventDefault()}
+              onClick={() => assignmentInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all"
+            >
+              <input
+                ref={assignmentInputRef}
+                type="file"
+                onChange={handleAssignmentSelect}
+                accept=".pdf,.txt,.doc,.docx,.md"
+                className="hidden"
+              />
+              {assignmentFile ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
+                    <div className="text-left">
+                      <p className="font-semibold text-foreground">
+                        {assignmentFile.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {(files[0].size / 1024 / 1024).toFixed(2)} MB
+                        {(assignmentFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   </div>
                   <button
-                    onClick={() => setFiles([])}
-                    className="p-1 hover:bg-background rounded transition-colors flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setAssignmentFile(null)
+                    }}
+                    className="p-1 hover:bg-destructive/20 rounded transition-colors"
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </button>
                 </div>
+              ) : (
+                <div>
+                  <Upload className="w-10 h-10 text-primary mx-auto mb-2" />
+                  <p className="font-semibold text-foreground mb-1">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    PDF, Word, or Text files (Max 50MB)
+                  </p>
+                </div>
               )}
-            </>
-          ) : (
-            <>
-              <p className="text-muted-foreground">
-                Paste your essay or paper text to get AI-powered feedback
-              </p>
+            </div>
+          </div>
 
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Paste your paper, essay, or assignment text here..."
-                className="w-full h-64 px-3 py-3 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none font-mono text-sm"
+          {/* Rubric File */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Grading Rubric File <span className="text-destructive">*</span>
+            </label>
+            <div
+              onDrop={(e) => handleDrop(e, 'rubric')}
+              onDragOver={(e) => e.preventDefault()}
+              onClick={() => rubricInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-thirdary hover:bg-thirdary/5 transition-all"
+            >
+              <input
+                ref={rubricInputRef}
+                type="file"
+                onChange={handleRubricSelect}
+                accept=".pdf,.txt,.doc,.docx,.md"
+                className="hidden"
               />
-              <p className="text-xs text-muted-foreground">
-                {content.length} characters
-              </p>
-            </>
+              {rubricFile ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
+                    <div className="text-left">
+                      <p className="font-semibold text-foreground">
+                        {rubricFile.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(rubricFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setRubricFile(null)
+                    }}
+                    className="p-1 hover:bg-destructive/20 rounded transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <Upload className="w-10 h-10 text-thirdary mx-auto mb-2" />
+                  <p className="font-semibold text-foreground mb-1">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    PDF, Word, or Text files (Max 50MB)
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-gap-3 gap-3 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive/80">{error}</p>
+            </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-border">
+        <div className="flex gap-3 p-6 border-t border-border bg-secondary">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-secondary transition-colors font-medium"
+            className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-background transition-colors font-medium"
           >
             Cancel
           </button>
           <button
-            onClick={handleGrade}
-            disabled={
-              (inputMode === 'file' && files.length === 0) ||
-              (inputMode === 'text' && !content.trim()) ||
-              isLoading
-            }
-            className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
+            onClick={handleSubmit}
+            disabled={!isValid || isLoading}
+            className="flex-1 px-4 py-2.5 bg-linear-to-r from-primary to-thirdary text-white rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium disabled:hover:shadow-none"
           >
-            {isLoading ? 'Grading...' : 'Grade Paper'}
+            {isLoading ? 'Submitting...' : 'Submit for Grading'}
           </button>
         </div>
       </div>
