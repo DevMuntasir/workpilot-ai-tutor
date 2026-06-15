@@ -25,29 +25,26 @@ export default function StudySetsPage() {
   }
 
   return (
-    <div className="w-full bg-gradient-to-br from-white via-blue-50/30 to-white min-h-screen">
-      {/* Header Section */}
-
+    <div className="w-full bg-background min-h-screen">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8">
         {/* Hero Section - Always Show */}
-        <div className="mb-10 relative overflow-hidden rounded-3xl bg-linear-to-br from-primary via-[#3825b4]/90 to-primary p-8 sm:p-10">
+        <div className="mb-10 relative overflow-hidden rounded-3xl bg-linear-to-br from-primary via-primary to-thirdary p-8 sm:p-10">
           {/* Decorative glow orbs */}
           <div className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 bg-white/20 rounded-full blur-3xl"></div>
-          <div className="pointer-events-none absolute -bottom-32 -left-20 w-80 h-80 bg-[#9FCB98]/20 rounded-full blur-3xl"></div>
+          <div className="pointer-events-none absolute -bottom-32 -left-20 w-80 h-80 bg-accent/20 rounded-full blur-3xl"></div>
           {/* Subtle dot grid */}
           <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:20px_20px]"></div>
 
           <div className="relative">
             <div className="mb-7 max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur-sm">
-                <Sparkles className="w-3.5 h-3.5 text-[#9FCB98]" />
                 <span className="text-xs font-bold text-white tracking-wide">STUDY SETS</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-white mb-3 leading-tight tracking-tight">
                 What do you wanna master today?
               </h2>
-              <p className="text-indigo-100 text-base sm:text-lg max-w-xl leading-relaxed">
+              <p className="text-white/80 text-base sm:text-lg max-w-xl leading-relaxed">
                 Upload notes, videos, or links and get interactive flashcards, quizzes &amp; study guides instantly.
               </p>
             </div>
@@ -58,12 +55,12 @@ export default function StudySetsPage() {
                 onClick={() => setShowUploadModal(true)}
                 className="group flex items-center gap-4 p-5 bg-white/95 backdrop-blur-sm rounded-2xl border border-white/40 hover:bg-white hover:shadow-2xl hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 text-left"
               >
-                <div className="shrink-0 p-3.5 rounded-xl bg-linear-to-br from-[#5B65E0] to-[#5100a7] text-white group-hover:scale-110 transition-transform duration-300">
+                <div className="shrink-0 p-3.5 rounded-xl bg-linear-to-br from-primary to-thirdary text-white group-hover:scale-110 transition-transform duration-300">
                   <Upload className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">Upload File</p>
-                  <p className="text-sm text-slate-500">PDF, image, video</p>
+                  <p className="font-bold text-foreground">Upload File</p>
+                  <p className="text-sm text-muted-foreground">PDF, image, video</p>
                 </div>
               </button>
 
@@ -71,12 +68,12 @@ export default function StudySetsPage() {
                 onClick={() => setShowPasteModal(true)}
                 className="group flex items-center gap-4 p-5 bg-white/95 backdrop-blur-sm rounded-2xl border border-white/40 hover:bg-white hover:shadow-2xl hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 text-left"
               >
-                <div className="shrink-0 p-3.5 rounded-xl bg-linear-to-br from-[#5B65E0] to-[#5100a7] text-white group-hover:scale-110 transition-transform duration-300">
+                <div className="shrink-0 p-3.5 rounded-xl bg-linear-to-br from-primary to-thirdary text-white group-hover:scale-110 transition-transform duration-300">
                   <LinkIcon className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">Paste Content</p>
-                  <p className="text-sm text-slate-500">Paste you text here.</p>
+                  <p className="font-bold text-foreground">Paste Content</p>
+                  <p className="text-sm text-muted-foreground">Paste your text here.</p>
                 </div>
               </button>
             </div>
@@ -86,40 +83,37 @@ export default function StudySetsPage() {
         {/* Content Area */}
         {studySets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="p-6 bg-linear-to-br from-slate-100 to-slate-200 rounded-xl mb-6">
-              <Sparkles className="w-12 h-12 text-slate-600" />
+            <div className="p-6 bg-secondary rounded-xl mb-6">
+              <Sparkles className="w-12 h-12 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">No study sets yet</h2>
-            <p className="text-slate-600 mb-6 max-w-sm text-center">Use the upload or paste button above to create your first study set</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">No study sets yet</h2>
+            <p className="text-muted-foreground mb-6 max-w-sm text-center">Use the upload or paste button above to create your first study set</p>
           </div>
         ) : (
           <>
           <div className="flex items-center justify-between mb-6">
-
-            <h3 className="text-2xl font-bold text-slate-900 mb-6">Your study sets</h3>
-
-                <div className="flex fit items-center gap-1.5 bg-slate-100/60 p-1.5 rounded-lg border border-slate-200">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-md transition-all ${viewMode === 'grid'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                  >
-                    <Grid3x3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-md transition-all ${viewMode === 'list'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
+            <h3 className="text-2xl font-bold text-foreground">Your study sets</h3>
+            <div className="flex fit items-center gap-1.5 bg-secondary p-1.5 rounded-lg border border-border">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-all ${viewMode === 'grid'
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-all ${viewMode === 'list'
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-            {/* Section Title */}
 
             {/* Study Sets Grid */}
             <div
