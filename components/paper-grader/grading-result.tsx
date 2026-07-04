@@ -178,7 +178,7 @@ export default function GradingResult({ result, onBack }: GradingResultProps) {
             {grading && grading.improvement_areas.length > 0 && (
               <div className="bg-linear-to-br from-amber-50 to-amber-50/50 dark:from-amber-950/30 dark:to-amber-950/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6 shadow-md">
                 <h2 className="text-lg font-bold text-amber-900 dark:text-amber-100 mb-4 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" /> Areas for Improvement
+                  Areas for Improvement
                 </h2>
                 <ul className="space-y-3">
                   {grading.improvement_areas.map((area, idx) => (
