@@ -113,27 +113,35 @@ export default function UploadModal({ onClose }: UploadModalProps) {
     file.size <= 10 * 1024 * 1024 &&
     (file.type === 'application/pdf' || /\.pdf$/i.test(file.name))
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || [])
-    const nextPdf = selectedFiles.find((file) => isAcceptedPdf(file))
+  const acceptFiles = (candidates: File[]) => {
+    if (candidates.length === 0) return
+
+    const nextPdf = candidates.find((file) => isAcceptedPdf(file))
 
     if (nextPdf) {
       setFiles([nextPdf])
       setUploadedResponse(null)
       setErrorMessage('')
+      return
     }
+
+    const oversized = candidates.find(
+      (file) => file.type === 'application/pdf' || /\.pdf$/i.test(file.name)
+    )
+    setErrorMessage(
+      oversized
+        ? 'That PDF is larger than 10MB. Please upload a smaller file.'
+        : 'Only PDF files are supported. Please upload a PDF.'
+    )
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    acceptFiles(Array.from(e.target.files || []))
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    const droppedFiles = Array.from(e.dataTransfer.files || [])
-    const nextPdf = droppedFiles.find((file) => isAcceptedPdf(file))
-
-    if (nextPdf) {
-      setFiles([nextPdf])
-      setUploadedResponse(null)
-      setErrorMessage('')
-    }
+    acceptFiles(Array.from(e.dataTransfer.files || []))
   }
 
   const handleRemoveFile = (index: number) => {

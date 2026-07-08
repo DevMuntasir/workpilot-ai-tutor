@@ -19,6 +19,7 @@ type ApiRequestOptions = {
   omitDefaultHeaders?: boolean
   omitAuthHeader?: boolean
   retryOnUnauthorized?: boolean
+  timeoutMs?: number
 }
 
 type ApiClientConfig = {
@@ -96,8 +97,21 @@ function extractErrorMessage(payload: unknown): string | null {
     return payload.message
   }
 
-  if ('error' in payload && typeof payload.error === 'string') {
-    return payload.error
+  if ('error' in payload) {
+    const errorValue = payload.error
+
+    if (typeof errorValue === 'string') {
+      return errorValue
+    }
+
+    if (
+      errorValue &&
+      typeof errorValue === 'object' &&
+      'message' in errorValue &&
+      typeof errorValue.message === 'string'
+    ) {
+      return errorValue.message
+    }
   }
 
   if ('detail' in payload) {
@@ -117,6 +131,35 @@ function extractErrorMessage(payload: unknown): string | null {
   }
 
   return null
+}
+
+function getFallbackMessageForStatus(status: number): string {
+  switch (status) {
+    case 400:
+      return 'The request could not be processed. Please review your input and try again.'
+    case 401:
+      return 'Your session has expired. Please sign in again.'
+    case 403:
+      return 'You do not have permission to perform this action.'
+    case 404:
+      return 'The requested resource could not be found.'
+    case 408:
+      return 'The request took too long. Please try again.'
+    case 409:
+      return 'This action conflicts with the current state. Please refresh and try again.'
+    case 413:
+      return 'The file or content is too large to upload.'
+    case 422:
+      return 'Some of the submitted information is invalid. Please review and try again.'
+    case 429:
+      return 'Too many requests. Please wait a moment and try again.'
+  }
+
+  if (status >= 500) {
+    return 'Something went wrong on our end. Please try again in a moment.'
+  }
+
+  return `Request failed (${status}). Please try again.`
 }
 
 function parseResponsePayload(responseText: string): unknown {
@@ -151,9 +194,10 @@ export class ApiClient {
     requestBody: BodyInit | undefined,
     headers: Headers,
     signal?: AbortSignal,
+    timeoutMs?: number,
   ) {
     const abortController = new AbortController()
-    const timeoutHandle = setTimeout(() => abortController.abort(), this.timeoutMs)
+    const timeoutHandle = setTimeout(() => abortController.abort(), timeoutMs ?? this.timeoutMs)
 
     if (signal) {
       signal.addEventListener('abort', () => abortController.abort(), { once: true })
@@ -276,6 +320,7 @@ export class ApiClient {
       omitDefaultHeaders = false,
       omitAuthHeader = false,
       retryOnUnauthorized = true,
+      timeoutMs,
     } = options
 
     const requestHeaders = new Headers()
@@ -314,7 +359,7 @@ export class ApiClient {
     }
 
     try {
-      let response = await this.executeFetch(path, method, requestBody, requestHeaders, signal)
+      let response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
 
       if (response.status === 401 && !omitAuthHeader && retryOnUnauthorized) {
         console.warn(`Got 401 for ${path}, attempting to refresh token...`)
@@ -323,7 +368,7 @@ export class ApiClient {
         if (refreshedAuth?.access_token) {
           console.log(`Token refreshed, retrying ${path}...`)
           requestHeaders.set('authorization', `Bearer ${refreshedAuth.access_token}`)
-          response = await this.executeFetch(path, method, requestBody, requestHeaders, signal)
+          response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
         } else {
           console.error(`Token refresh failed for ${path}`)
         }
@@ -333,7 +378,7 @@ export class ApiClient {
       const responseData = parseResponsePayload(responseText)
 
       if (!response.ok) {
-        const message = extractErrorMessage(responseData) ?? `Request failed with status ${response.status}`
+        const message = extractErrorMessage(responseData) ?? getFallbackMessageForStatus(response.status)
         throw new ApiClientError(message, response.status, responseData)
       }
 

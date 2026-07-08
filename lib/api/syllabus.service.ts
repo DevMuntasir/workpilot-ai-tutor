@@ -250,6 +250,8 @@ export async function uploadSyllabusPdf(payload: UploadSyllabusPdfPayload) {
   const response = await apiClient.request<SyllabusUploadResponse>('/api/v1/syllabus/upload/pdf', {
     method: 'POST',
     body: formData,
+    // PDF upload + server-side parsing can take well over the default 15s timeout.
+    timeoutMs: 120_000,
   })
 
   return normalizeUploadResponse(response)

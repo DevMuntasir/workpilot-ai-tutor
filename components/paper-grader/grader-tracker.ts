@@ -1,6 +1,7 @@
 'use client'
 
 import { getApiClientErrorMessage } from '@/lib/api/client'
+import { toast } from '@/hooks/use-toast'
 import {
   fetchGraderResult,
   type GraderResultResponse,
@@ -16,6 +17,7 @@ export type GraderTrackingOptions = {
 
 const POLL_INTERVAL_MS = 5_000
 const POLL_DURATION_MS = 5 * 60_000
+const MAX_CONSECUTIVE_FETCH_FAILURES = 3
 const WS_LOG_PREFIX = '[grader-ws]'
 
 const TERMINAL_STATUSES = new Set(['completed', 'graded', 'done', 'failed', 'error', 'cancelled'])
@@ -52,6 +54,7 @@ class GraderSubmissionTracker {
   private inflightFetch = false
   private hasStarted = false
   private finished = false
+  private consecutiveFetchFailures = 0
 
   constructor(options: GraderTrackingOptions) {
     this.submissionId = options.submissionId
@@ -149,6 +152,7 @@ class GraderSubmissionTracker {
 
     try {
       const result = await fetchGraderResult(this.submissionId)
+      this.consecutiveFetchFailures = 0
       this.emit(result)
 
       if (isTerminalStatus(result.submission.status)) {
@@ -159,10 +163,22 @@ class GraderSubmissionTracker {
         this.finish()
       }
     } catch (error) {
+      this.consecutiveFetchFailures += 1
+      const message = getApiClientErrorMessage(error, 'Failed to fetch grading result.')
       logWebSocketEvent('failed to fetch grader result', {
         submissionId: this.submissionId,
-        error: getApiClientErrorMessage(error, 'Failed to fetch grading result.'),
+        attempt: this.consecutiveFetchFailures,
+        error: message,
       })
+
+      if (this.consecutiveFetchFailures >= MAX_CONSECUTIVE_FETCH_FAILURES) {
+        toast({
+          title: 'Grading status unavailable',
+          description: `${message} Reopen this page to check the result again.`,
+          variant: 'destructive',
+        })
+        this.finish()
+      }
     } finally {
       this.inflightFetch = false
     }
@@ -191,6 +207,10 @@ class GraderSubmissionTracker {
 
       if (this.pollStartedAt && Date.now() - this.pollStartedAt >= POLL_DURATION_MS) {
         logWebSocketEvent('polling fallback stopped after timeout', { submissionId: this.submissionId })
+        toast({
+          title: 'Grading is taking longer than expected',
+          description: 'We stopped checking automatically. Reopen this page later to see the result.',
+        })
         return
       }
 

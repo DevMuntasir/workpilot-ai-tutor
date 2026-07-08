@@ -71,7 +71,7 @@ function getStepStatus(sectionType: StudySetUiSectionType, studySet: StudySet | 
   const status = getCardStatus(sectionType, studySet, generationMeta)
   if (status === 'ready') return 'completed'
   if (status === 'failed') return 'failed'
-  if (status === 'generating') return 'pending'
+  // 'generating' and 'fetching' both mean work is happening — show a spinner.
   return 'in-progress'
 }
 
@@ -206,10 +206,25 @@ export function StudySetOverview({
     return (
       <div className="flex  flex-col items-center justify-center min-h-[60vh] space-y-8">
         <div className="flex flex-col items-center space-y-4">
-    
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
+            <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <LoaderCircle className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          </div>
+
           <div className="text-center">
             <h2 className="text-3xl font-bold text-foreground">Building your study set</h2>
             <p className="text-muted-foreground mt-2">This usually takes a few seconds.</p>
+          </div>
+        </div>
+
+        <div className="w-full max-w-md">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full rounded-full bg-primary transition-all duration-700 ease-out ${doneJobs === 0 ? 'animate-pulse' : ''}`}
+              style={{ width: `${totalJobs > 0 ? Math.max(8, (doneJobs / totalJobs) * 100) : 8}%` }}
+            />
           </div>
         </div>
 
@@ -230,9 +245,6 @@ export function StudySetOverview({
                     )}
                     {stepStatus === 'failed' && (
                       <AlertCircle className="w-5 h-5 text-red-600" />
-                    )}
-                    {stepStatus === 'pending' && (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
                     )}
                   </div>
                   <p className={stepStatus === 'completed' || stepStatus === 'in-progress' ? 'text-foreground font-medium' : 'text-muted-foreground'}>

@@ -385,6 +385,8 @@ export async function uploadStudySetPdf(payload: UploadStudySetPdfPayload) {
   const response = await apiClient.request<StudySetUploadResponse>('/api/v1/upload/pdf', {
     method: 'POST',
     body: formData,
+    // PDF upload + server-side parsing can take well over the default 15s timeout.
+    timeoutMs: 120_000,
   })
 
   return normalizeUploadResponse(response)

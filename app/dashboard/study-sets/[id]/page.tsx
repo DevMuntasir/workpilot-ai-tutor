@@ -29,10 +29,18 @@ import {
 import { subscribeToStudySetGeneration } from '@/components/study-sets/generation-tracker'
 import { getStudySetGenerationMeta, type StoredStudySetGenerationMeta } from '@/lib/api/study-sets.storage'
 import {
+  generateStudySet,
   submitStudySetFillBlankAnswer,
   submitStudySetFlashcardReview,
   submitStudySetMcqAnswer,
 } from '@/lib/api/study-sets.service'
+import { ensureStudySetGenerationTracking } from '@/components/study-sets/generation-tracker'
+import {
+  uiToBackendGenerationType,
+  type StudySetUiSectionType,
+} from '@/components/study-sets/generation-mapping'
+import { getApiClientErrorMessage } from '@/lib/api/client'
+import { toast } from '@/hooks/use-toast'
 import { NotesEditor } from '@/components/study-sets/NotesEditor'
 import { StudySetOverview } from './overview'
 
@@ -623,17 +631,36 @@ export default function StudySetDetailPage({
     router.push(`/dashboard/study-sets/${id}?mode=${sectionType}`)
   }
 
-  const handleRetrySection = async (sectionType: string) => {
-    if (!generationMeta || !uploadedResponse) return
+  const handleRetrySection = async (sectionType: StudySetUiSectionType) => {
+    const documentId = generationMeta?.documentId
+    const backendType = uiToBackendGenerationType[sectionType]
+
+    if (!documentId || !backendType) {
+      toast({
+        title: 'Unable to retry',
+        description: 'This study set is missing generation details, so this section cannot be regenerated.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     try {
       // Re-generate just this section
       await generateStudySet({
-        documentId: uploadedResponse.document.id,
-        types: [sectionType],
+        documentId,
+        types: [backendType],
       })
-      ensureStudySetGenerationTracking(uploadedResponse.document.id)
+      ensureStudySetGenerationTracking(documentId)
+      toast({
+        title: 'Regeneration started',
+        description: 'This section is being generated again. It will refresh automatically when ready.',
+      })
     } catch (error) {
-      console.error('Error retrying section:', error)
+      toast({
+        title: 'Retry failed',
+        description: getApiClientErrorMessage(error, 'Could not restart generation for this section. Please try again.'),
+        variant: 'destructive',
+      })
     }
   }
 
