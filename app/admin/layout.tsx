@@ -58,12 +58,13 @@ export default function AdminLayout({
     void apiClient.ensureValidAccessToken()
   }, [])
 
+  // Client-side gate only for UX; the backend independently enforces admin permissions.
   useEffect(() => {
     const storedAuth = getStoredAuthObject()
 
     if (!storedAuth?.access_token) {
-      // clearAuthBrowserState()
-      // router.replace('/login')
+      clearAuthBrowserState()
+      router.replace('/login')
       return
     }
 

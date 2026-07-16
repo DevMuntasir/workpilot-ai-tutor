@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth'
+import { sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [infoMessage, setInfoMessage] = useState('')
   const [isEmailSigningIn, setIsEmailSigningIn] = useState(false)
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false)
 
@@ -88,13 +89,36 @@ export default function LoginPage() {
       const firebaseIdToken = await credential.user.getIdToken()
       await createSessionAndRedirect(firebaseIdToken)
     } catch (error) {
-      // await signOut(auth).catch(() => null)
-      // clearAuthBrowserState()
-      console.log(error);
-      
       setErrorMessage(getFirebaseAuthErrorMessage(error))
     } finally {
       setIsEmailSigningIn(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (isSubmitting) {
+      return
+    }
+
+    if (!auth || !isFirebaseConfigured) {
+      setErrorMessage(firebaseUnavailableMessage)
+      return
+    }
+
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setInfoMessage('')
+      setErrorMessage('Enter your email above first, then tap "Forgot password?" to get a reset link.')
+      return
+    }
+
+    setErrorMessage('')
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail)
+      setInfoMessage(`If an account exists for ${trimmedEmail}, a password reset link has been sent.`)
+    } catch (error) {
+      setInfoMessage('')
+      setErrorMessage(getFirebaseAuthErrorMessage(error))
     }
   }
 
@@ -191,16 +215,6 @@ export default function LoginPage() {
                   />
                 </Link>
 
-                <p className="pt-2 text-right text-xs font-medium text-slate-500 sm:text-sm">
-                  Not a member?{' '}
-                  <Link
-                    href="/"
-                    className="font-semibold"
-                    style={{ color: 'var(--button)' }}
-                  >
-                    Register now
-                  </Link>
-                </p>
               </div>
 
               <div className="mx-auto mb-8 w-full max-w-sm text-center">
@@ -259,13 +273,21 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Link
-                    href="/"
-                    className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
+                  <button
+                    type="button"
+                    onClick={handlePasswordReset}
+                    disabled={isSubmitting || Boolean(firebaseUnavailableMessage)}
+                    className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Recovery Password
-                  </Link>
+                    Forgot password?
+                  </button>
                 </div>
+
+                {infoMessage && (
+                  <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    {infoMessage}
+                  </p>
+                )}
 
                 {(errorMessage || firebaseUnavailableMessage) && (
                   <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -316,21 +338,6 @@ export default function LoginPage() {
                     />
                   </SocialIconButton>
 
-                  <SocialIconButton label="Continue with Apple" disabled>
-                    <Image
-                      src="/apple-icon.png"
-                      alt="Apple"
-                      width={22}
-                      height={22}
-                      className="h-[22px] w-[22px]"
-                    />
-                  </SocialIconButton>
-
-                  <SocialIconButton label="Continue with Facebook" disabled>
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877F2] text-lg font-bold text-white">
-                      f
-                    </span>
-                  </SocialIconButton>
                 </div>
               </div>
             </div>

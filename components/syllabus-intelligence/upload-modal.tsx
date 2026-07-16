@@ -182,7 +182,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
       <div className="w-full max-w-2xl max-h-screen overflow-y-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xl">
         {isLoading && (
           <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-[#5B65E0] transition-all duration-300" style={{ width: `${stageProgressPercent}%` }} />
+            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${stageProgressPercent}%` }} />
           </div>
         )}
         <div className="flex items-center justify-between p-6 border-b border-slate-200/80">
@@ -204,7 +204,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
             onClick={() => setInputMode('file')}
             className={`flex-1 px-4 py-3 font-semibold transition-colors text-sm ${
               inputMode === 'file'
-                ? 'text-[#5B65E0] border-b-2 border-[#5B65E0]'
+                ? 'text-primary border-b-2 border-primary'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -214,7 +214,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
             onClick={() => setInputMode('text')}
             className={`flex-1 px-4 py-3 font-semibold transition-colors text-sm ${
               inputMode === 'text'
-                ? 'text-[#5B65E0] border-b-2 border-[#5B65E0]'
+                ? 'text-primary border-b-2 border-primary'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -231,7 +231,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="e.g., Data Structures and Algorithms"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5B65E0]/50"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
             <div>
@@ -242,7 +242,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
                 max={24}
                 value={semesterWeeks}
                 onChange={(event) => setSemesterWeeks(event.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B65E0]/50"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
                 onDrop={handleDrop}
                 onDragOver={(event) => event.preventDefault()}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center bg-slate-50 cursor-pointer hover:border-[#5B65E0]/50 hover:bg-slate-100 transition-colors"
+                className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center bg-slate-50 cursor-pointer hover:border-primary/50 hover:bg-slate-100 transition-colors"
               >
                 <input
                   ref={fileInputRef}
@@ -266,7 +266,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
                   accept=".pdf,.txt,.md,.markdown"
                   className="hidden"
                 />
-                <Upload className="w-12 h-12 text-[#5B65E0] mx-auto mb-3" />
+                <Upload className="w-12 h-12 text-primary mx-auto mb-3" />
                 <p className="font-semibold text-slate-900">Click to upload or drag and drop</p>
                 <p className="text-xs text-slate-500 mt-1">PDF or plain text (.txt, .md) up to 20MB</p>
               </div>
@@ -310,7 +310,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 placeholder="Paste full syllabus, weekly schedule, grading breakdown, and assignment details..."
-                className="w-full h-64 px-3 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5B65E0]/50 resize-none"
+                className="w-full h-64 px-3 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               />
               <p className="text-xs text-slate-500">{text.length} characters</p>
             </>
@@ -343,7 +343,7 @@ export default function SyllabusUploadModal({ onClose, onSuccess }: SyllabusUplo
           <button
             onClick={handleAnalyze}
             disabled={!canSubmit}
-            className="flex-1 px-4 py-2.5 rounded-lg bg-[#5B65E0] text-white hover:bg-[#4950c9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold"
           >
             {isLoading ? (
               loadingLabel || 'Analyzing...'

@@ -23,7 +23,7 @@ const WS_LOG_PREFIX = '[grader-ws]'
 const TERMINAL_STATUSES = new Set(['completed', 'graded', 'done', 'failed', 'error', 'cancelled'])
 
 function logWebSocketEvent(message: string, details?: Record<string, unknown>) {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') {
     return
   }
 

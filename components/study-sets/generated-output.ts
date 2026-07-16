@@ -377,7 +377,8 @@ export function mergeGeneratedOutputIntoStudySet(
     selections: nextSelections,
     sections: nextSections,
     items: countItems(nextSections),
-    notesMarkdown: normalizedOutput.notesMarkdown ?? currentStudySet.notesMarkdown,
+    notesMarkdown:
+      'notesMarkdown' in normalizedOutput ? normalizedOutput.notesMarkdown : currentStudySet.notesMarkdown,
     notesHtml: uiSectionType === 'notes' ? undefined : currentStudySet.notesHtml,
     updatedAt: new Date().toISOString(),
   }

@@ -25,7 +25,7 @@ const POLL_DURATION_MS = 10 * 60_000
 const WS_LOG_PREFIX = '[study-set-ws]'
 
 function logWebSocketEvent(message: string, details?: Record<string, unknown>) {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') {
     return
   }
 
@@ -628,7 +628,6 @@ class StudySetGenerationTracker {
     }))
   }
 }
-//co
 
 const trackerRegistry = new Map<string, StudySetGenerationTracker>()
 

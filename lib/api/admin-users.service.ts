@@ -273,16 +273,16 @@ export async function fetchAdminUserDetails(userId: string, signal?: AbortSignal
   const payload = response.data ?? response
 
   return {
-    id: payload.id,
+    id: payload.id ?? userId,
     firebase_uid: payload.firebase_uid ?? null,
-    email: payload.email,
+    email: payload.email ?? '',
     display_name: payload.display_name ?? null,
-    role: payload.role,
-    is_active: payload.is_active,
-    is_email_verified: payload.is_email_verified,
-    token_balance: payload.token_balance,
+    role: payload.role ?? 'user',
+    is_active: payload.is_active ?? false,
+    is_email_verified: payload.is_email_verified ?? false,
+    token_balance: payload.token_balance ?? 0,
     last_login_at: payload.last_login_at ?? null,
-    created_at: payload.created_at,
+    created_at: payload.created_at ?? '',
     subscription: payload.subscription
       ? {
           plan: payload.subscription.plan ?? null,

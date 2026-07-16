@@ -400,30 +400,20 @@ export default function PasteModal({ onClose }: PasteModalProps) {
             onClick={handleSecondaryAction}
             className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-secondary transition-colors font-medium"
           >
-            {step === 2 ? 'Back' : step === 3 ? 'Close' : 'Cancel'}
+            {step === 2 ? 'Back' : 'Cancel'}
           </button>
           <button
             onClick={handlePrimaryAction}
-            disabled={
-              step === 1
-                ? !hasContent || isUploading
-                : step === 2
-                  ? !hasSelections || isGenerating
-                  : !(generationMeta?.batch.status === 'completed')
-            }
+            disabled={step === 1 ? !hasContent || isUploading : !hasSelections || isGenerating}
             className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity font-medium"
           >
             {step === 1
               ? isUploading
                 ? 'Uploading...'
                 : 'Next'
-              : step === 2
-                ? isGenerating
-                  ? 'Generating...'
-                  : 'Generate'
-                : generationMeta?.batch.status === 'completed'
-                  ? 'Done'
-                  : 'Tracking...'}
+              : isGenerating
+                ? 'Generating...'
+                : 'Generate'}
           </button>
         </div>
       </div>

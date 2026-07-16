@@ -28,9 +28,19 @@ function readCurrentSessionState() {
   }
 }
 
+// The first render must match the server-rendered HTML, so start from a
+// deterministic logged-out state and hydrate the real session in an effect.
+const INITIAL_SESSION_STATE: ReturnType<typeof readCurrentSessionState> = {
+  isAuthenticated: false,
+  role: null,
+  displayName: null,
+  permissions: EMPTY_SESSION_PERMISSIONS,
+  permissionKeys: [],
+}
+
 export function useRbac() {
-  const [sessionState, setSessionState] = useState(readCurrentSessionState)
-  const [isReady, setIsReady] = useState(typeof window !== 'undefined')
+  const [sessionState, setSessionState] = useState(INITIAL_SESSION_STATE)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
     const syncSessionState = () => {

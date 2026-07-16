@@ -2,24 +2,7 @@
 
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import {
-  ArrowLeft,
-  Bold,
-  ChevronLeft,
-  ChevronRight,
-  Heading1,
-  Highlighter,
-  Italic,
-  List,
-  ListOrdered,
-  MessageSquare,
-  NotebookPen,
-  Paintbrush,
-  Quote,
-  Redo2,
-  Underline,
-  Undo2,
-} from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   getStoredStudySetById,
   getStoredStudySets,
@@ -43,20 +26,6 @@ import { getApiClientErrorMessage } from '@/lib/api/client'
 import { toast } from '@/hooks/use-toast'
 import { NotesEditor } from '@/components/study-sets/NotesEditor'
 import { StudySetOverview } from './overview'
-
-const editorTools = [
-  Undo2,
-  Redo2,
-  Heading1,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  ListOrdered,
-  Quote,
-  Highlighter,
-  Paintbrush,
-]
 
 function formatUpdatedAt(value?: string) {
   if (!value) return 'Just now'
@@ -240,28 +209,6 @@ function getLocalCorrectOptionIndex(item: any) {
   )
 }
 
-async function syncStudySetStatsToDatabase(
-  studySetId: string,
-  stats: { unfamiliar: number; learning: number; familiar: number; mastered: number },
-  updatedAt: string,
-) {
-  try {
-    await fetch('/api/study-sets/stats', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        studySetId,
-        stats,
-        updatedAt,
-      }),
-    })
-  } catch {
-    // Intentionally silent: local progress should still persist offline.
-  }
-}
-
 export default function StudySetDetailPage({
   params,
 }: {
@@ -287,8 +234,6 @@ export default function StudySetDetailPage({
   const [writtenEvaluations, setWrittenEvaluations] = useState<
     Record<number, { submitted: boolean; score: number; feedback: string; missingKeywords: string[] }>
   >({})
-  const lastSyncedStatsKeyRef = useRef('')
-  const [rightPaneTab, setRightPaneTab] = useState<'personal' | 'chat'>('personal')
   const activeModeFromQuery = searchParams.get('mode')
 
   useEffect(() => {
@@ -569,17 +514,8 @@ export default function StudySetDetailPage({
       updatedAt,
     }
 
-    const nextStatsKey = `${studySet.id}:${nextStats.unfamiliar}:${nextStats.learning}:${nextStats.familiar}:${nextStats.mastered}`
-
     setStudySet(updatedSet)
     persistStudySet(updatedSet)
-
-    if (lastSyncedStatsKeyRef.current === nextStatsKey) {
-      return
-    }
-
-    lastSyncedStatsKeyRef.current = nextStatsKey
-    void syncStudySetStatsToDatabase(studySet.id, nextStats, updatedAt)
   }, [
     hasAnyInteractiveSubmission,
     performanceStats.familiar,
@@ -717,7 +653,12 @@ export default function StudySetDetailPage({
         },
       }))
     } catch {
-      // Backend marking unavailable: local marking already applied above.
+      // Local marking already applied above; let the learner know the server didn't record it.
+      toast({
+        title: 'Answer not saved to your account',
+        description: 'We could not reach the server, so this answer may not count toward your synced progress. Check your connection.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -770,7 +711,12 @@ export default function StudySetDetailPage({
         }))
       }
     } catch {
-      // Backend marking unavailable: local marking already applied above.
+      // Local marking already applied above; let the learner know the server didn't record it.
+      toast({
+        title: 'Answer not saved to your account',
+        description: 'We could not reach the server, so this answer may not count toward your synced progress. Check your connection.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -789,7 +735,12 @@ export default function StudySetDetailPage({
       wasCorrect,
       responseTimeMs,
     }).catch(() => {
-      // Review tracking is best-effort; local state already reflects the choice.
+      // Local state already reflects the choice; let the learner know the server didn't record it.
+      toast({
+        title: 'Review not saved to your account',
+        description: 'We could not reach the server, so this review may not count toward your synced progress. Check your connection.',
+        variant: 'destructive',
+      })
     })
   }
 
@@ -1344,8 +1295,12 @@ export default function StudySetDetailPage({
 
   if (!studySet) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center space-y-4 text-center">
-        <p className="text-xl font-semibold text-foreground">Study set not found</p>
+      <div className="flex h-screen flex-col items-center justify-center space-y-4 px-6 text-center">
+        <p className="text-xl font-semibold text-foreground">Study set not found on this device</p>
+        <p className="max-w-md text-sm text-muted-foreground">
+          Study sets are saved in this browser. If you created this set on another device or cleared your
+          browser data, it won&apos;t appear here. You can create it again from your study sets.
+        </p>
         <button
           onClick={() => router.push('/dashboard/study-sets')}
           className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
@@ -1354,13 +1309,6 @@ export default function StudySetDetailPage({
         </button>
       </div>
     )
-  }
-
-  const stats = studySet.stats ?? {
-    unfamiliar: 0,
-    learning: 0,
-    familiar: 0,
-    mastered: 0,
   }
 
   return (
@@ -1481,86 +1429,7 @@ export default function StudySetDetailPage({
               )}
             </section>
 
-            {/* <aside className="w-full h-fit shrink-0 border-t border-border bg-[#fbfbf8] lg:w-[360px] lg:border-l lg:border-t-0 xl:w-[390px]">
-              <div className="border-b border-border px-4 py-4">
-                <div className="grid grid-cols-2 gap-2 rounded-2xl bg-secondary/50 p-1">
-                  {([
-                    { id: 'personal', label: 'My Notes' },
-                    { id: 'chat', label: 'Chat' },
-                  ] as const).map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setRightPaneTab(tab.id)}
-                      className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${rightPaneTab === tab.id
-                          ? 'bg-white text-foreground shadow-sm'
-                          : 'text-muted-foreground'
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className="flex h-[calc(100%-81px)] flex-col p-4">
-                <div className="rounded-[30px] border border-dashed border-border bg-white px-6 py-8 text-center shadow-sm">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-muted-foreground">
-                    {rightPaneTab === 'personal' ? (
-                      <NotebookPen className="h-7 w-7" />
-                    ) : (
-                      <MessageSquare className="h-7 w-7" />
-                    )}
-                  </div>
-
-                  <h3 className="mt-5 text-xl font-semibold text-foreground">
-                    {rightPaneTab === 'personal' ? 'Personal note pad' : 'Tutor chat'}
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                    {rightPaneTab === 'personal'
-                      ? 'This side panel is reserved for your own handwritten or typed notes. The workspace is shown now so the final layout matches the product direction, but editing comes later.'
-                      : 'The AI chat rail is intentionally left as a placeholder for now. You can plug in tutor chat later without redesigning the notes workspace.'}
-                  </p>
-
-                  <div className="mt-6 inline-flex rounded-full border border-border bg-secondary/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Coming soon
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-[#f3dddd] bg-[#fff5f5] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600/80">
-                      Unfamiliar
-                    </p>
-                    <p className="mt-3 text-2xl font-bold text-red-600">{stats.unfamiliar}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-[#f8e2c7] bg-[#fff8ef] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600/80">
-                      Learning
-                    </p>
-                    <p className="mt-3 text-2xl font-bold text-orange-600">{stats.learning}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-[#d8e9fb] bg-[#f4faff] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600/80">
-                      Familiar
-                    </p>
-                    <p className="mt-3 text-2xl font-bold text-blue-600">{stats.familiar}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-[#dcf1df] bg-[#f3fbf4] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-600/80">
-                      Mastered
-                    </p>
-                    <p className="mt-3 text-2xl font-bold text-green-600">{stats.mastered}</p>
-                  </div>
-                </div>
-
-            
-              </div>
-            </aside> */}
           </div>
         </div>
       </div>

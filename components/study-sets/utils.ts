@@ -617,28 +617,28 @@ export function normalizeStudySetPayload(payload: any, fallbackTitle?: string): 
 export const normalizeStudySetResponse = normalizeStudySetPayload
 
 function readStoredStudySets(): StudySet[] {
-  if (typeof window === 'undefined') return seededStudySets
+  if (typeof window === 'undefined') return []
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seededStudySets))
-      return seededStudySets
-    }
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed) && parsed.length) {
-      const normalized = parsed
-        .map((entry) => normalizeStudySetPayload(entry))
-        .filter((entry): entry is StudySet => Boolean(entry))
+    if (!raw) return []
 
-      if (normalized.length) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
-        return normalized
-      }
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) {
+      window.localStorage.removeItem(STORAGE_KEY)
+      return []
     }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seededStudySets))
-    return seededStudySets
+
+    return parsed
+      .map((entry) => normalizeStudySetPayload(entry))
+      .filter((entry): entry is StudySet => Boolean(entry))
   } catch {
-    return seededStudySets
+    // Corrupt storage: clear it so the app recovers instead of crashing on every read.
+    try {
+      window.localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // ignore storage errors
+    }
+    return []
   }
 }
 
@@ -671,143 +671,4 @@ export function getStoredStudySets() {
 
 export function getStoredStudySetById(id: string) {
   return readStoredStudySets().find((set) => set.id === id) ?? null
-}
-
-const seededStudySets: StudySet[] = [
-  {
-    id: 'work-defines-a-person',
-    title: 'Work Defines a Person',
-    items: 18,
-    summary:
-      'A philosophical exploration of how actions, not birth status, determine identity and legacy.',
-    selections: ['notes', 'multipleChoice', 'flashcards', 'fillInTheBlanks', 'tutorLesson'],
-    sections: [
-      {
-        type: 'notes',
-        label: 'Notes',
-        items: [
-          'Deeds are the ultimate determinant of status; lineage alone cannot build legacy.',
-          'Positive contributions build admiration that outlasts material wealth or family prestige.',
-          'Ethical lapses erase respect quickly; accountability is central to reputation.',
-        ],
-      },
-      {
-        type: 'multipleChoice',
-        label: 'Multiple Choice',
-        items: [
-          {
-            question: "Which factor primarily shapes a person's standing?",
-            options: [
-              'Specific lineage or birth family',
-              'The type of actions and deeds performed',
-              'Financial wealth accumulated',
-              'Immediate family status',
-            ],
-            answer: 'The type of actions and deeds performed',
-            explanation:
-              'The lesson emphasizes deeds and contributions as the lasting measure of character.',
-          },
-          {
-            question: 'What remains after a person passes away according to the text?',
-            options: [
-              'Their possessions and property',
-              'The memory of their deeds',
-              'Their physical appearance',
-              'Their hereditary title',
-            ],
-            answer: 'The memory of their deeds',
-            explanation: 'Legacy is built through meaningful contributions that people remember.',
-          },
-        ],
-      },
-      {
-        type: 'flashcards',
-        label: 'Flashcards',
-        items: [
-          {
-            prompt: 'Core idea behind "Let Birth Be Anywhere, Let Deeds Be Good"',
-            answer: 'Actions define respect and honor, regardless of birthplace or status.',
-          },
-          {
-            prompt: 'Long-term effect of commendable actions',
-            answer: 'They inspire admiration and set a precedent for others.',
-          },
-        ],
-      },
-      {
-        type: 'fillInTheBlanks',
-        label: 'Fill in the Blanks',
-        items: [
-          {
-            sentence: 'True reputation is earned through consistent _____ behavior.',
-            answer: 'ethical',
-            explanation: 'Ethical behavior builds trust and honor.',
-          },
-          {
-            sentence: 'Legacy is not dependent on social origin but on meaningful _____.',
-            answer: 'contributions',
-            explanation: 'Contributions determine long-term remembrance.',
-          },
-        ],
-      },
-      {
-        type: 'tutorLesson',
-        label: 'Tutor Lesson',
-        items: [
-          {
-            prompt: 'Why are deeds more important than lineage?',
-            response:
-              'Because deeds show personal agency and character, while lineage is accidental.',
-            followUp: 'Provide an example from history where action trumped lineage.',
-          },
-        ],
-      },
-    ],
-    notesMarkdown: `# Work Defines a Person
-
-> Why actions shape identity more strongly than inheritance.
-
-This note reframes identity as something earned through daily conduct. It argues that a person becomes memorable not by origin, but by the quality of work, ethics, and contribution they leave behind.
-
-## Deeds Over Lineage
-
-The text places action above ancestry as the true measure of a human being.
-
-Birth may explain where a person comes from, but it does not prove their worth. Worth becomes visible through decisions, effort, and the benefit those actions bring to others.
-
-Because of this, respect is not inherited permanently. It must be renewed through conduct that others can witness and trust.
-
-> A name may be given at birth, but character is written through work.
-
-## Legacy and Memory
-
-What remains after a person is gone is the memory of what they did.
-
-The lesson suggests that good work gives a person a second life in memory. Communities continue to tell stories about service, courage, discipline, and generosity.
-
-Bad actions do the opposite. They reduce trust and can turn a family name into a warning rather than a source of honor.
-
-> Legacy is the long shadow cast by repeated action.
-
-## Key Takeaway
-
-The practical lesson is simple: if identity is built through action, then each decision becomes part of the story others will remember.`,
-    sourceText:
-      'Work defines character more than birth. A person is remembered for good deeds, responsibility, and the example they set for others.',
-    stats: {
-      unfamiliar: 9,
-      learning: 4,
-      familiar: 3,
-      mastered: 2,
-    },
-    createdAt: new Date().toISOString(),
-  },
-]
-
-export function ensureSeededStudySets() {
-  const sets = readStoredStudySets()
-  if (typeof window !== 'undefined') {
-    writeStoredStudySets(sets)
-  }
-  return sets
 }

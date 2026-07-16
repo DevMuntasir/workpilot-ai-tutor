@@ -4,13 +4,12 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Edit3, FileText, GraduationCap, Headphones, Layers, ListChecks, PenSquare, Upload, X } from 'lucide-react'
 import { getApiClientErrorMessage } from '@/lib/api/client'
-import { saveStudySetGenerationMeta, saveStudySetUploadMeta } from '@/lib/api/study-sets.storage'
+import { saveStudySetGenerationMeta, saveStudySetUploadMeta, type StoredStudySetGenerationMeta } from '@/lib/api/study-sets.storage'
 import { generateStudySet, type StudySetUploadResponse, uploadStudySetPdf, uploadStudySetText } from '@/lib/api/study-sets.service'
 import { ensureStudySetGenerationTracking } from './generation-tracker'
 import { type StudySetUiSectionType, uiToBackendGenerationType, uiSectionTypeLabels } from './generation-mapping'
 import { createUploadPlaceholderStudySet } from './upload-placeholder'
 import { persistStudySet } from './utils'
-// update
 
 type SourceType = 'pdf' | 'text'
 type OutputType = StudySetUiSectionType

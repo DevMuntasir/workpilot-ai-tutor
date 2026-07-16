@@ -29,6 +29,13 @@ type ApiClientConfig = {
 
 const DEFAULT_TIMEOUT_MS = 15_000
 
+// Auth/refresh diagnostics are only useful during development; keep production consoles clean.
+const debugLog = (...args: unknown[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(...args)
+  }
+}
+
 export class ApiClientError extends Error {
   status: number
   data: unknown
@@ -220,7 +227,7 @@ export class ApiClient {
       return
     }
 
-    console.warn('Auth failure - clearing session')
+    debugLog('Auth failure - clearing session')
 
     if (auth) {
       await signOut(auth).catch(() => null)
@@ -247,13 +254,13 @@ export class ApiClient {
       const normalizedAuth = normalizeRefreshAuthPayload(response)
 
       if (!normalizedAuth) {
-        console.error('Invalid refresh response format:', response)
+        debugLog('Invalid refresh response format')
         throw new ApiClientError('Refresh token response did not include a valid auth session.')
       }
 
       return normalizedAuth
     } catch (error) {
-      console.error('Refresh token error:', error)
+      debugLog('Refresh token error:', error)
       throw error
     }
   }
@@ -267,25 +274,25 @@ export class ApiClient {
       const storedAuth = getStoredAuthObject()
 
       if (!storedAuth?.refresh_token) {
-        console.warn('No refresh token available')
+        debugLog('No refresh token available')
         await this.handleAuthFailure()
         return null
       }
 
       if (!isStoredRefreshTokenUsable()) {
-        console.warn('Refresh token is expired or unusable')
+        debugLog('Refresh token is expired or unusable')
         await this.handleAuthFailure()
         return null
       }
 
       try {
-        console.log('Attempting to refresh access token...')
+        debugLog('Attempting to refresh access token...')
         const refreshedAuth = await this.refreshAccessToken(storedAuth.refresh_token)
         replaceStoredAuthObject(refreshedAuth)
-        console.log('Access token refreshed successfully')
+        debugLog('Access token refreshed successfully')
         return refreshedAuth
       } catch (error) {
-        console.error('Failed to refresh access token:', error)
+        debugLog('Failed to refresh access token:', error)
         await this.handleAuthFailure()
         return null
       } finally {
@@ -362,15 +369,15 @@ export class ApiClient {
       let response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
 
       if (response.status === 401 && !omitAuthHeader && retryOnUnauthorized) {
-        console.warn(`Got 401 for ${path}, attempting to refresh token...`)
+        debugLog(`Got 401 for ${path}, attempting to refresh token...`)
         const refreshedAuth = await this.refreshStoredSession()
 
         if (refreshedAuth?.access_token) {
-          console.log(`Token refreshed, retrying ${path}...`)
+          debugLog(`Token refreshed, retrying ${path}...`)
           requestHeaders.set('authorization', `Bearer ${refreshedAuth.access_token}`)
           response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
         } else {
-          console.error(`Token refresh failed for ${path}`)
+          debugLog(`Token refresh failed for ${path}`)
         }
       }
 

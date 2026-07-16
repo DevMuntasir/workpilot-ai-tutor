@@ -83,14 +83,19 @@ export default function StudySetsPage() {
         {/* Content Area */}
         {studySets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-        
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-primary">
+              <Sparkles className="h-7 w-7" />
+            </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">No study sets yet</h2>
             <p className="text-muted-foreground mb-6 max-w-sm text-center">Use the upload or paste button above to create your first study set</p>
           </div>
         ) : (
           <>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-foreground">Your study sets</h3>
+            <div>
+              <h3 className="text-2xl font-bold text-foreground">Your study sets</h3>
+              <p className="text-xs text-muted-foreground mt-1">Saved on this device</p>
+            </div>
             <div className="flex fit items-center gap-1.5 bg-secondary p-1.5 rounded-lg border border-border">
               <button
                 onClick={() => setViewMode('grid')}
@@ -154,4 +159,3 @@ export default function StudySetsPage() {
     </div>
   )
 }
-// aa

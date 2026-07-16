@@ -8,7 +8,7 @@ import {
   type SyllabusIntelligenceResult,
 } from '@/components/syllabus-intelligence/utils'
 import { formatUTCDate } from '@/lib/utils'
-import { ArrowUpRight, Trash2, Upload } from 'lucide-react'
+import { ArrowUpRight, FileText, Trash2, Upload } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -76,10 +76,10 @@ export default function SyllabusIntelligenceContent() {
     <div className="w-full bg-linear-to-br from-white via-blue-50/30 to-white min-h-screen">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8">
         {/* Hero Section */}
-        <div className="mb-10 relative overflow-hidden rounded-3xl bg-linear-to-br from-primary via-[#3825b4]/90 to-primary p-8 sm:p-10">
+        <div className="mb-10 relative overflow-hidden rounded-3xl bg-linear-to-br from-primary via-thirdary/90 to-primary p-8 sm:p-10">
           {/* Decorative glow orbs */}
           <div className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 bg-white/20 rounded-full blur-3xl"></div>
-          <div className="pointer-events-none absolute -bottom-32 -left-20 w-80 h-80 bg-[#9FCB98]/20 rounded-full blur-3xl"></div>
+          <div className="pointer-events-none absolute -bottom-32 -left-20 w-80 h-80 bg-accent/20 rounded-full blur-3xl"></div>
           {/* Subtle dot grid */}
           <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:20px_20px]"></div>
 
@@ -99,7 +99,7 @@ export default function SyllabusIntelligenceContent() {
               onClick={openUploadModal}
               className="group flex items-center gap-4 p-5 bg-white/95 backdrop-blur-sm rounded-2xl border border-white/40 hover:bg-white hover:shadow-2xl hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 text-left max-w-xs"
             >
-              <div className="shrink-0 p-3.5 rounded-xl bg-linear-to-br from-[#5B65E0] to-[#5100a7] text-white group-hover:scale-110 transition-transform duration-300">
+              <div className="shrink-0 p-3.5 rounded-xl bg-linear-to-br from-primary to-thirdary text-white group-hover:scale-110 transition-transform duration-300">
                 <Upload className="w-6 h-6" />
               </div>
               <div>
@@ -113,13 +113,18 @@ export default function SyllabusIntelligenceContent() {
         {/* Content Area */}
         {sortedResults.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-  
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-primary">
+              <FileText className="h-7 w-7" />
+            </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">No syllabus analyzed yet</h2>
             <p className="text-slate-600 mb-6 max-w-sm text-center">Use the upload button above to analyze your first syllabus and generate your semester roadmap</p>
           </div>
         ) : (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-slate-900">Recent Analyses</h3>
+            <div>
+              <h3 className="text-2xl font-bold text-slate-900">Recent Analyses</h3>
+              <p className="text-xs text-muted-foreground mt-1">Saved on this device</p>
+            </div>
             <ul className="space-y-3">
               {sortedResults.map((result) => (
                 <li key={result.id}>
@@ -130,7 +135,7 @@ export default function SyllabusIntelligenceContent() {
                       router.push(`?id=${result.id}`)
                     }}
                     aria-label={`Open analysis for ${result.title}`}
-                    className="w-full rounded-2xl border border-slate-200/80 bg-white hover:border-[#5B65E0]/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 p-5 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    className="w-full rounded-2xl border border-slate-200/80 bg-white hover:border-primary/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 p-5 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">

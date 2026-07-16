@@ -332,7 +332,7 @@ export function StudySetOverview({
                     cy="50"
                     r="45"
                     fill="none"
-                    stroke="#5B65E0"
+                    stroke="var(--primary)"
                     strokeWidth="3"
                     strokeDasharray={`${(masteryPercentage / 100) * 282.7} 282.7`}
                     className="transition-all"
@@ -363,7 +363,7 @@ export function StudySetOverview({
                   onOpenSection(firstSection)
                 }
               }}
-              className="px-8 py-4 bg-linear-to-r from-[#5B65E0] to-[#5100a7] text-white font-bold rounded-xl hover:shadow-lg hover:shadow-blue-600/40 transition-all duration-300 whitespace-nowrap hover:scale-105 active:scale-95"
+              className="px-8 py-4 bg-linear-to-r from-primary to-thirdary text-white font-bold rounded-xl hover:shadow-lg hover:shadow-blue-600/40 transition-all duration-300 whitespace-nowrap hover:scale-105 active:scale-95"
             >
               Start Learning
             </button>
