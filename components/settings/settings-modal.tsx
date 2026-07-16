@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { BarChart3, LoaderCircle, RefreshCcw, RotateCcw, X } from 'lucide-react'
 import BillingSettings from '@/components/settings/billing-settings'
+import PersonalizedAiSettings from '@/components/settings/personalized-ai-settings'
 import { Button } from '@/components/ui/button'
 import {
   fetchCreditBalance,
   fetchPersonalization,
   getApiClientErrorMessage,
-  PERSONALIZATION_INSTRUCTIONS_MAX_LENGTH,
   updatePersonalization,
 } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
@@ -55,8 +55,8 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
   const [instructions, setInstructions] = useState('')
   const [hasLoadedPersonalization, setHasLoadedPersonalization] = useState(false)
   const [isPersonalizationLoading, setIsPersonalizationLoading] = useState(false)
-  const [themeSettings, setThemeSettings] = useState<ThemeCustomization>(DEFAULT_THEME_CUSTOMIZATION)
   const [isSaving, setIsSaving] = useState(false)
+  const [themeSettings, setThemeSettings] = useState<ThemeCustomization>(DEFAULT_THEME_CUSTOMIZATION)
   const [status, setStatus] = useState<string | null>(null)
   const [themeStatus, setThemeStatus] = useState<string | null>(null)
   const [creditBalance, setCreditBalance] = useState<number | null>(null)
@@ -127,8 +127,8 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
     void loadCreditBalance()
   }, [activeTab, hasLoadedUsage, loadCreditBalance])
 
-  const saveInstructions = async () => {
-    const trimmed = instructions.trim()
+  const saveInstructions = async (nextInstructions: string) => {
+    const trimmed = nextInstructions.trim()
     if (!trimmed) return
 
     setIsSaving(true)
@@ -137,11 +137,11 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
     try {
       const result = await updatePersonalization({ instructions: trimmed })
       setInstructions(result.instructions || trimmed)
-      setStatus('Personalized AI instructions saved successfully.')
+      setStatus('Personalized AI profile saved successfully.')
     } catch (error) {
       toast({
-        title: 'Unable to save instructions',
-        description: getApiClientErrorMessage(error, 'Your instructions could not be saved.'),
+        title: 'Unable to save personalization profile',
+        description: getApiClientErrorMessage(error, 'Your personalization profile could not be saved.'),
         variant: 'destructive',
       })
     } finally {
@@ -185,32 +185,14 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
 
           <section className="min-h-0 flex-1 overflow-auto px-6 py-5">
             {activeTab === 'personalizedAi' ? (
-              <div className="space-y-5">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Personalized AI</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">Add custom instructions to tailor how the AI responds to you. These will be applied across your sessions.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="personalization-instructions" className="text-sm font-medium text-foreground">Instructions</label>
-                  <textarea
-                    id="personalization-instructions"
-                    value={instructions}
-                    maxLength={PERSONALIZATION_INSTRUCTIONS_MAX_LENGTH}
-                    onChange={(event) => { setInstructions(event.target.value); setStatus(null) }}
-                    disabled={isPersonalizationLoading}
-                    rows={8}
-                    placeholder="e.g. Explain concepts step by step, use simple language, and include practice examples."
-                    className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                  <p className="text-right text-xs text-muted-foreground">{instructions.length} / {PERSONALIZATION_INSTRUCTIONS_MAX_LENGTH}</p>
-                </div>
-
-                {isPersonalizationLoading && <p className="flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="h-4 w-4 animate-spin" />Loading your instructions...</p>}
-                {status && <p className="text-sm text-primary">{status}</p>}
-
-                <button onClick={saveInstructions} disabled={!instructions.trim() || isSaving || isPersonalizationLoading} className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">{isSaving ? 'Saving...' : 'Save'}</button>
-              </div>
+              <PersonalizedAiSettings
+                initialInstructions={instructions}
+                isLoading={isPersonalizationLoading}
+                isSaving={isSaving}
+                status={status}
+                onSave={(nextInstructions) => saveInstructions(nextInstructions)}
+                onStatusChange={setStatus}
+              />
             ) : activeTab === 'usage' ? (
               <div className="space-y-5">
                 <div className="flex items-start justify-between gap-4">

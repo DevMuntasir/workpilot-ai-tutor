@@ -36,6 +36,8 @@ const sectionIconMap: Record<string, any> = {
   content: BookOpen,
 }
 
+const PERSONALIZATION_ONBOARDING_KEY = 'workpilot_personalization_onboarding_seen'
+
 function DashboardLayoutShell({
   children,
 }: {
@@ -130,6 +132,13 @@ function DashboardLayoutContent({
 
     if (storedAuth.user_role === 'admin') {
       router.replace(getPortalRouteByRole(storedAuth.user_role))
+    }
+
+    const hasSeenPersonalizationOnboarding = window.localStorage.getItem(PERSONALIZATION_ONBOARDING_KEY) === 'true'
+    if (!hasSeenPersonalizationOnboarding) {
+      window.localStorage.setItem(PERSONALIZATION_ONBOARDING_KEY, 'true')
+      setSettingsInitialTab('personalizedAi')
+      setShowSettingsModal(true)
     }
   }, [router])
 
