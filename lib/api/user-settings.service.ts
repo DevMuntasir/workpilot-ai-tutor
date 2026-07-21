@@ -2,9 +2,22 @@ import { ApiClientError, apiClient } from '@/lib/api/client'
 
 export const PERSONALIZATION_INSTRUCTIONS_MAX_LENGTH = 2500
 
+export type PersonalizationProfileFieldKey =
+  | 'learningStage'
+  | 'learningGoal'
+  | 'explanationDepth'
+  | 'noteFormat'
+  | 'exampleStyle'
+  | 'practiceStyle'
+  | 'studyPace'
+  | 'tutorApproach'
+  | 'tonePreference'
+
+export type PersonalizationProfileFields = Partial<Record<PersonalizationProfileFieldKey, string>>
+
 export type UpdatePersonalizationPayload = {
   instructions: string
-}
+} & PersonalizationProfileFields
 
 export type PersonalizationProfile = {
   id: string | null
@@ -12,7 +25,7 @@ export type PersonalizationProfile = {
   isActive: boolean
   moderationStatus: string | null
   moderationReason: string | null
-}
+} & PersonalizationProfileFields
 
 export type PersonalizationSettings = {
   profile: PersonalizationProfile | null
@@ -37,6 +50,15 @@ function normalizeProfile(value: unknown): PersonalizationProfile | null {
     isActive: record.is_active === true,
     moderationStatus: typeof record.moderation_status === 'string' ? record.moderation_status : null,
     moderationReason: typeof record.moderation_reason === 'string' ? record.moderation_reason : null,
+    learningStage: typeof record.learning_stage === 'string' ? record.learning_stage : undefined,
+    learningGoal: typeof record.learning_goal === 'string' ? record.learning_goal : undefined,
+    explanationDepth: typeof record.explanation_depth === 'string' ? record.explanation_depth : undefined,
+    noteFormat: typeof record.note_format === 'string' ? record.note_format : undefined,
+    exampleStyle: typeof record.example_style === 'string' ? record.example_style : undefined,
+    practiceStyle: typeof record.practice_style === 'string' ? record.practice_style : undefined,
+    studyPace: typeof record.study_pace === 'string' ? record.study_pace : undefined,
+    tutorApproach: typeof record.tutor_approach === 'string' ? record.tutor_approach : undefined,
+    tonePreference: typeof record.tone_preference === 'string' ? record.tone_preference : undefined,
   }
 }
 
@@ -72,9 +94,22 @@ export async function updatePersonalization(
     )
   }
 
+  const body = {
+    instructions,
+    learning_stage: payload.learningStage,
+    learning_goal: payload.learningGoal,
+    explanation_depth: payload.explanationDepth,
+    note_format: payload.noteFormat,
+    example_style: payload.exampleStyle,
+    practice_style: payload.practiceStyle,
+    study_pace: payload.studyPace,
+    tutor_approach: payload.tutorApproach,
+    tone_preference: payload.tonePreference,
+  }
+
   const response = await apiClient.request<unknown>('/api/v1/personalization', {
     method: 'PUT',
-    body: { instructions },
+    body,
     signal,
   })
 

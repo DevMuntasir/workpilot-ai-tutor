@@ -307,10 +307,12 @@ export class ApiClient {
     const storedAuth = getStoredAuthObject()
 
     if (!storedAuth) {
+      debugLog('No stored auth session found while resolving access token.')
       return null
     }
 
     if (!storedAuth.access_token || isStoredAccessTokenExpired()) {
+      debugLog('Stored access token is missing or expired, attempting refresh before request.')
       const refreshedAuth = await this.refreshStoredSession()
       return refreshedAuth?.access_token ?? null
     }
@@ -369,7 +371,7 @@ export class ApiClient {
       let response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
 
       if (response.status === 401 && !omitAuthHeader && retryOnUnauthorized) {
-        debugLog(`Got 401 for ${path}, attempting to refresh token...`)
+        debugLog(`Got 401 for ${path}. Request options: omitAuthHeader=${omitAuthHeader}, retryOnUnauthorized=${retryOnUnauthorized}. Attempting refresh...`)
         const refreshedAuth = await this.refreshStoredSession()
 
         if (refreshedAuth?.access_token) {
@@ -379,6 +381,10 @@ export class ApiClient {
         } else {
           debugLog(`Token refresh failed for ${path}`)
         }
+      } else if (response.status === 401) {
+        debugLog(
+          `Skipping refresh retry for ${path} because request options disabled it. omitAuthHeader=${omitAuthHeader}, retryOnUnauthorized=${retryOnUnauthorized}`,
+        )
       }
 
       const responseText = await response.text()

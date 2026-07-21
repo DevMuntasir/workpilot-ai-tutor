@@ -10,8 +10,14 @@ import {
   fetchPersonalization,
   getApiClientErrorMessage,
   updatePersonalization,
+  type PersonalizationProfile,
 } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
+import {
+  buildLearningPreferenceInstructions,
+  emptyLearningPreferences,
+  type LearningPreferences,
+} from './personalized-ai-preferences'
 import {
   applyThemeCustomization,
   clearThemeCustomization,
@@ -42,6 +48,20 @@ interface SettingsModalProps {
 const LIGHT_BACKGROUND_REFERENCE = '#FFFFFF'
 const DARK_BACKGROUND_REFERENCE = '#1A1A1A'
 
+function toLearningPreferences(profile: PersonalizationProfile | null, fallback = emptyLearningPreferences()): LearningPreferences {
+  return {
+    learningStage: profile?.learningStage ?? fallback.learningStage,
+    learningGoal: profile?.learningGoal ?? fallback.learningGoal,
+    explanationDepth: profile?.explanationDepth ?? fallback.explanationDepth,
+    noteFormat: profile?.noteFormat ?? fallback.noteFormat,
+    exampleStyle: profile?.exampleStyle ?? fallback.exampleStyle,
+    practiceStyle: profile?.practiceStyle ?? fallback.practiceStyle,
+    studyPace: profile?.studyPace ?? fallback.studyPace,
+    tutorApproach: profile?.tutorApproach ?? fallback.tutorApproach,
+    tonePreference: profile?.tonePreference ?? fallback.tonePreference,
+  }
+}
+
 const getContrastRating = (ratio: number) => {
   if (ratio >= 7) return 'AAA'
   if (ratio >= 4.5) return 'AA'
@@ -53,6 +73,7 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab)
   const [instructions, setInstructions] = useState('')
+  const [learningPreferences, setLearningPreferences] = useState<LearningPreferences>(emptyLearningPreferences)
   const [hasLoadedPersonalization, setHasLoadedPersonalization] = useState(false)
   const [isPersonalizationLoading, setIsPersonalizationLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -75,6 +96,7 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
     try {
       const result = await fetchPersonalization()
       setInstructions(result.instructions)
+      setLearningPreferences(toLearningPreferences(result.profile))
       setHasLoadedPersonalization(true)
     } catch (error) {
       toast({
@@ -127,16 +149,17 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
     void loadCreditBalance()
   }, [activeTab, hasLoadedUsage, loadCreditBalance])
 
-  const saveInstructions = async (nextInstructions: string) => {
-    const trimmed = nextInstructions.trim()
+  const saveLearningPreferences = async (preferences: LearningPreferences, extraInstructions: string) => {
+    const trimmed = buildLearningPreferenceInstructions(preferences, extraInstructions)
     if (!trimmed) return
 
     setIsSaving(true)
     setStatus(null)
 
     try {
-      const result = await updatePersonalization({ instructions: trimmed })
+      const result = await updatePersonalization({ instructions: trimmed, ...preferences })
       setInstructions(result.instructions || trimmed)
+      setLearningPreferences(toLearningPreferences(result.profile, preferences))
       setStatus('Personalized AI profile saved successfully.')
     } catch (error) {
       toast({
@@ -187,10 +210,11 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
             {activeTab === 'personalizedAi' ? (
               <PersonalizedAiSettings
                 initialInstructions={instructions}
+                initialPreferences={learningPreferences}
                 isLoading={isPersonalizationLoading}
                 isSaving={isSaving}
                 status={status}
-                onSave={(nextInstructions) => saveInstructions(nextInstructions)}
+                onSave={saveLearningPreferences}
                 onStatusChange={setStatus}
               />
             ) : activeTab === 'usage' ? (

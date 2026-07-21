@@ -65,6 +65,7 @@ export default function StudySetsPage() {
               </button>
 
               <button
+                id="paste-content-btn"
                 onClick={() => setShowPasteModal(true)}
                 className="group flex items-center gap-4 p-5 bg-white/95 backdrop-blur-sm rounded-2xl border border-white/40 hover:bg-white hover:shadow-2xl hover:shadow-black/20 transition-all duration-300 hover:-translate-y-1 text-left"
               >

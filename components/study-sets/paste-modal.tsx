@@ -243,6 +243,7 @@ export default function PasteModal({ onClose }: PasteModalProps) {
           Your Content
         </label>
         <textarea
+          id="study-set-textarea"
           value={content}
           onChange={(e) => {
             setContent(e.target.value)
