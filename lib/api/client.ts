@@ -72,12 +72,26 @@ function normalizeRefreshAuthPayload(payload: unknown): StoredAuthObject | null 
     return payload
   }
 
-  if (!payload || typeof payload !== 'object' || !('auth' in payload)) {
+  if (!payload || typeof payload !== 'object') {
     return null
   }
 
-  const authPayload = payload.auth
-  return isStoredAuthObject(authPayload) ? authPayload : null
+  if ('auth' in payload && isStoredAuthObject(payload.auth)) {
+    return payload.auth
+  }
+
+  // Support the standard API envelope: { data: auth } or { data: { auth } }.
+  if ('data' in payload && payload.data && typeof payload.data === 'object') {
+    if (isStoredAuthObject(payload.data)) {
+      return payload.data
+    }
+
+    if ('auth' in payload.data && isStoredAuthObject(payload.data.auth)) {
+      return payload.data.auth
+    }
+  }
+
+  return null
 }
 
 function isBodyInit(body: unknown): body is BodyInit {
@@ -236,6 +250,10 @@ export class ApiClient {
     clearAuthBrowserState()
   }
 
+  private createSessionExpiredError(data: unknown = null) {
+    return new ApiClientError('Your session has expired. Please sign in again.', 401, data)
+  }
+
   async refreshAccessToken(refreshToken: string) {
     try {
       const response = await this.request<unknown>('/api/v1/auth/refresh', {
@@ -341,9 +359,13 @@ export class ApiClient {
     if (!omitAuthHeader) {
       const accessToken = await this.ensureValidAccessToken()
 
-      if (accessToken) {
-        requestHeaders.set('authorization', `Bearer ${accessToken}`)
+      if (!accessToken) {
+        // Never send a protected request without credentials. Apart from leaking
+        // a misleading backend error, that also creates avoidable API traffic.
+        throw this.createSessionExpiredError()
       }
+
+      requestHeaders.set('authorization', `Bearer ${accessToken}`)
     }
 
     if (headers) {
@@ -378,8 +400,15 @@ export class ApiClient {
           debugLog(`Token refreshed, retrying ${path}...`)
           requestHeaders.set('authorization', `Bearer ${refreshedAuth.access_token}`)
           response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
+
+          if (response.status === 401) {
+            const responseData = parseResponsePayload(await response.text())
+            await this.handleAuthFailure()
+            throw this.createSessionExpiredError(responseData)
+          }
         } else {
           debugLog(`Token refresh failed for ${path}`)
+          throw this.createSessionExpiredError()
         }
       } else if (response.status === 401) {
         debugLog(

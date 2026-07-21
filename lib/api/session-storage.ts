@@ -131,7 +131,25 @@ export function getStoredAccessToken() {
 }
 
 function parseAuthTimestamp(value: string) {
-  const timestamp = Date.parse(value)
+  const trimmedValue = value.trim()
+
+  if (!trimmedValue) {
+    return null
+  }
+
+  // Accept ISO-8601 as well as Unix timestamps returned by older API versions.
+  // Values below 1e12 are seconds; JavaScript timestamps are milliseconds.
+  if (/^\d+(?:\.\d+)?$/.test(trimmedValue)) {
+    const numericTimestamp = Number(trimmedValue)
+
+    if (!Number.isFinite(numericTimestamp)) {
+      return null
+    }
+
+    return numericTimestamp < 1_000_000_000_000 ? numericTimestamp * 1_000 : numericTimestamp
+  }
+
+  const timestamp = Date.parse(trimmedValue)
   return Number.isNaN(timestamp) ? null : timestamp
 }
 
@@ -162,7 +180,11 @@ export function isStoredRefreshTokenUsable() {
     return false
   }
 
-  return !isAuthTokenExpired(storedAuth.refresh_expires_at, 0)
+  const refreshExpiresAt = parseAuthTimestamp(storedAuth.refresh_expires_at)
+
+  // Expiry metadata is only a client-side optimization. If an older session has
+  // an unknown timestamp format, let the auth server make the final decision.
+  return refreshExpiresAt === null || refreshExpiresAt > Date.now()
 }
 
 export function replaceStoredAuthObject(auth: StoredAuthObject) {
