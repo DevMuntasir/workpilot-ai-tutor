@@ -3,7 +3,6 @@ import {
   clearAuthBrowserState,
   getStoredAuthObject,
   isStoredAccessTokenExpired,
-  isStoredRefreshTokenUsable,
   replaceStoredAuthObject,
   type StoredAuthObject,
 } from '@/lib/api/session-storage'
@@ -297,12 +296,6 @@ export class ApiClient {
         return null
       }
 
-      if (!isStoredRefreshTokenUsable()) {
-        debugLog('Refresh token is expired or unusable')
-        await this.handleAuthFailure()
-        return null
-      }
-
       try {
         debugLog('Attempting to refresh access token...')
         const refreshedAuth = await this.refreshAccessToken(storedAuth.refresh_token)
@@ -311,8 +304,21 @@ export class ApiClient {
         return refreshedAuth
       } catch (error) {
         debugLog('Failed to refresh access token:', error)
-        await this.handleAuthFailure()
-        return null
+
+        // `refresh_expires_at` is only client metadata and can be affected by
+        // clock skew or an older API timestamp format. Always let the auth
+        // server validate the refresh token. Also preserve the stored session
+        // on transient network/server errors so a later request can retry.
+        const isDefinitiveAuthRejection =
+          error instanceof ApiClientError &&
+          (error.status === 400 || error.status === 401 || error.status === 403)
+
+        if (isDefinitiveAuthRejection) {
+          await this.handleAuthFailure()
+          return null
+        }
+
+        throw error
       } finally {
         this.refreshPromise = null
       }
