@@ -158,7 +158,6 @@ export default function ProfileSettings() {
         <div className="space-y-2">
           <Label htmlFor="profile-email">Email address</Label>
           <Input id="profile-email" value={user?.email ?? ''} disabled />
-          <p className="text-xs text-muted-foreground">Email is managed by your sign-in provider.</p>
         </div>
       </div>
 

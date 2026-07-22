@@ -6,7 +6,7 @@ import SettingsModal, { type SettingsTab } from '@/components/settings/settings-
 import { getStoredStudySetById, getStoredStudySets, type StudySet } from '@/components/study-sets/utils'
 import { deleteCurrentSession, getPortalRouteByRole } from '@/lib/api/auth.service'
 import { fetchCurrentSubscription } from '@/lib/api/billing.service'
-import { apiClient } from '@/lib/api/client'
+import { apiClient, CREDIT_LIMIT_REACHED_EVENT, CreditLimitReachedEventDetail } from '@/lib/api/client'
 import { clearAuthBrowserState, getStoredAuthObject, replaceStoredAuthObject } from '@/lib/api/session-storage'
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
@@ -68,7 +68,8 @@ function DashboardLayoutContent({
   const searchParams = useSearchParams()
   const [activeStudySet, setActiveStudySet] = useState<StudySet | null>(null)
   const billingState = searchParams.get('billing')
-
+  const [creditLimitDetails, setCreditLimitDetails] =
+    useState<CreditLimitReachedEventDetail | null>(null)
   const handleLogout = async () => {
     if (isLoggingOut) {
       return
@@ -229,7 +230,28 @@ function DashboardLayoutContent({
     setSettingsInitialTab('billing')
     setShowSettingsModal(true)
   }, [billingState])
+  useEffect(() => {
+    const handleCreditLimitReached = (event: Event) => {
+      const creditEvent =
+        event as CustomEvent<CreditLimitReachedEventDetail>
 
+      setCreditLimitDetails(creditEvent.detail)
+      setSettingsInitialTab('billing')
+      setShowSettingsModal(true)
+    }
+
+    window.addEventListener(
+      CREDIT_LIMIT_REACHED_EVENT,
+      handleCreditLimitReached,
+    )
+
+    return () => {
+      window.removeEventListener(
+        CREDIT_LIMIT_REACHED_EVENT,
+        handleCreditLimitReached,
+      )
+    }
+  }, [])
   const currentMode = searchParams.get('mode')
   const defaultMode =
     activeStudySet?.sections.find((section) => section.type === 'notes')?.type ??
@@ -291,7 +313,14 @@ function DashboardLayoutContent({
       )}
 
       {showSettingsModal && (
-        <SettingsModal onClose={() => setShowSettingsModal(false)} initialTab={settingsInitialTab} />
+        <SettingsModal
+          initialTab={settingsInitialTab}
+          creditLimitDetails={creditLimitDetails}
+          onClose={() => {
+            setShowSettingsModal(false)
+            setCreditLimitDetails(null)
+          }}
+        />
       )}
     </>
   )

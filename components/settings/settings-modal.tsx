@@ -29,6 +29,7 @@ import {
   THEME_FONT_OPTIONS,
   type ThemeCustomization,
 } from '@/components/settings/theme-customization'
+import { CreditLimitReachedEventDetail } from '@/lib/api/client'
 
 export type SettingsTab = 'account' | 'profile' | 'usage' | 'billing' | 'personalizedAi' | 'customizeTheme'
 
@@ -43,7 +44,8 @@ const menuItems: Array<{ id: SettingsTab; label: string }> = [
 
 interface SettingsModalProps {
   onClose: () => void
-  initialTab?: SettingsTab
+  initialTab?: SettingsTab,
+  creditLimitDetails?: CreditLimitReachedEventDetail | null
 }
 
 const LIGHT_BACKGROUND_REFERENCE = '#FFFFFF'
@@ -70,7 +72,7 @@ const getContrastRating = (ratio: number) => {
   return 'Fail'
 }
 
-export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }: SettingsModalProps) {
+export default function SettingsModal({ onClose, initialTab = 'personalizedAi', creditLimitDetails = null, }: SettingsModalProps) {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab)
   const [instructions, setInstructions] = useState('')
@@ -425,7 +427,10 @@ export default function SettingsModal({ onClose, initialTab = 'personalizedAi' }
             )}
 
             <div className={activeTab === 'billing' ? 'block' : 'hidden'}>
-              <BillingSettings isActive={activeTab === 'billing'} />
+              <BillingSettings
+                isActive={activeTab === 'billing'}
+                creditLimitDetails={creditLimitDetails}
+              />
             </div>
           </section>
         </div>

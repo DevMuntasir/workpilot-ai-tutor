@@ -1,4 +1,4 @@
-export { ApiClient, ApiClientError, apiClient, getApiClientErrorMessage } from '@/lib/api/client'
+export { ApiClient, ApiClientError, apiClient, getApiClientErrorMessage,  isInsufficientCreditsError } from '@/lib/api/client'
 export {
   createAdminRole,
   fetchAdminPermissions,

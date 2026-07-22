@@ -205,7 +205,7 @@ export const NotesEditor = forwardRef<
         editorProps: {
             attributes: {
                 class: [
-                    'prose prose-stone mx-auto min-h-[700px] w-full max-w-[920px] px-1 py-8 text-[17px] leading-[1.8] text-[#273244] caret-primary focus:outline-none sm:px-5 lg:py-12',
+                    'prose prose-stone mx-left min-h-[700px] w-full max-w-[920px] px-1 py-8 text-[17px] leading-[1.8] text-[#273244] caret-primary focus:outline-none sm:px-5 lg:py-12',
                     '[&_.rich-note-document]:w-full',
                     '[&_h1]:mb-8 [&_h1]:font-sans [&_h1]:text-[2.25rem] [&_h1]:font-extrabold [&_h1]:tracking-[-0.035em] [&_h1]:text-[#111827] [&_h1]:leading-[1.12] lg:[&_h1]:text-[3.25rem]',
                     '[&_h2]:m-0 [&_h2]:mb-5 [&_h2]:font-sans [&_h2]:font-bold [&_h2]:tracking-[-0.025em] [&_h2]:text-[#172033] [&_h2]:text-[1.75rem] [&_h2]:leading-[1.2] lg:[&_h2]:text-[2.15rem]',
@@ -329,7 +329,7 @@ export const NotesEditor = forwardRef<
     }
 
     return (
-        <div className={`rich-notes-editor-root min-h-full bg-[#fbfcfe] ${className}`}>
+        <div className={`rich-notes-editor-root min-h-full bg-[#fbfcfe]  max-w-[1000px] ${className}`}>
             {showToolbar && (
                 <div className="sticky top-0 z-20 border-b border-[#e4e7ed] bg-white/95 px-3 py-3 shadow-[0_8px_30px_rgba(22,30,50,0.06)] backdrop-blur-xl sm:px-6">
                     <div className="mx-auto flex max-w-[1120px] items-center gap-1 overflow-x-auto rounded-xl border border-[#dfe3ea] bg-white p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -386,7 +386,7 @@ export const NotesEditor = forwardRef<
                 </BubbleMenu>
             )}
 
-            <div data-note-scroll-container className="px-5 pb-24 sm:px-8 lg:px-12">
+            <div data-note-scroll-container className="px-5 pb-24 sm:px-8">
                 <EditorContent editor={editor} />
             </div>
         </div>

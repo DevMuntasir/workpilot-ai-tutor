@@ -7,7 +7,15 @@ import {
   type StoredAuthObject,
 } from '@/lib/api/session-storage'
 import { auth } from '@/lib/firebase'
+export const CREDIT_LIMIT_REACHED_EVENT =
+  'workpilot:credit-limit-reached'
 
+export type CreditLimitReachedEventDetail = {
+  message: string
+  path: string
+  data: unknown
+  status: number
+}
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 type ApiRequestOptions = {
@@ -159,6 +167,8 @@ function getFallbackMessageForStatus(status: number): string {
       return 'The request could not be processed. Please review your input and try again.'
     case 401:
       return 'Your session has expired. Please sign in again.'
+    case 402:
+      return 'You do not have enough credits to complete this action.'
     case 403:
       return 'You do not have permission to perform this action.'
     case 404:
@@ -396,29 +406,70 @@ export class ApiClient {
     }
 
     try {
-      let response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
+      let response = await this.executeFetch(
+        path,
+        method,
+        requestBody,
+        requestHeaders,
+        signal,
+        timeoutMs,
+      )
 
-      if (response.status === 401 && !omitAuthHeader && retryOnUnauthorized) {
-        debugLog(`Got 401 for ${path}. Request options: omitAuthHeader=${omitAuthHeader}, retryOnUnauthorized=${retryOnUnauthorized}. Attempting refresh...`)
+      /*
+       * Attempt to refresh the access token once when the API returns 401.
+       */
+      if (
+        response.status === 401 &&
+        !omitAuthHeader &&
+        retryOnUnauthorized
+      ) {
+        debugLog(
+          `Got 401 for ${path}. ` +
+          `Request options: omitAuthHeader=${omitAuthHeader}, ` +
+          `retryOnUnauthorized=${retryOnUnauthorized}. ` +
+          'Attempting refresh...',
+        )
+
         const refreshedAuth = await this.refreshStoredSession()
 
-        if (refreshedAuth?.access_token) {
-          debugLog(`Token refreshed, retrying ${path}...`)
-          requestHeaders.set('authorization', `Bearer ${refreshedAuth.access_token}`)
-          response = await this.executeFetch(path, method, requestBody, requestHeaders, signal, timeoutMs)
-
-          if (response.status === 401) {
-            const responseData = parseResponsePayload(await response.text())
-            await this.handleAuthFailure()
-            throw this.createSessionExpiredError(responseData)
-          }
-        } else {
+        if (!refreshedAuth?.access_token) {
           debugLog(`Token refresh failed for ${path}`)
           throw this.createSessionExpiredError()
         }
+
+        debugLog(`Token refreshed, retrying ${path}...`)
+
+        requestHeaders.set(
+          'authorization',
+          `Bearer ${refreshedAuth.access_token}`,
+        )
+
+        response = await this.executeFetch(
+          path,
+          method,
+          requestBody,
+          requestHeaders,
+          signal,
+          timeoutMs,
+        )
+
+        /*
+         * The refreshed token was rejected too.
+         * Clear the stored authentication and report session expiry.
+         */
+        if (response.status === 401) {
+          const responseText = await response.text()
+          const responseData = parseResponsePayload(responseText)
+
+          await this.handleAuthFailure()
+
+          throw this.createSessionExpiredError(responseData)
+        }
       } else if (response.status === 401) {
         debugLog(
-          `Skipping refresh retry for ${path} because request options disabled it. omitAuthHeader=${omitAuthHeader}, retryOnUnauthorized=${retryOnUnauthorized}`,
+          `Skipping refresh retry for ${path} because request options disabled it. ` +
+          `omitAuthHeader=${omitAuthHeader}, ` +
+          `retryOnUnauthorized=${retryOnUnauthorized}`,
         )
       }
 
@@ -426,21 +477,83 @@ export class ApiClient {
       const responseData = parseResponsePayload(responseText)
 
       if (!response.ok) {
-        const message = extractErrorMessage(responseData) ?? getFallbackMessageForStatus(response.status)
-        throw new ApiClientError(message, response.status, responseData)
+        const message =
+          extractErrorMessage(responseData) ??
+          getFallbackMessageForStatus(response.status)
+
+        const apiError = new ApiClientError(
+          message,
+          response.status,
+          responseData,
+        )
+
+        /*
+         * A 402 response means the user does not have enough credits.
+         * Dispatch a global event so the dashboard can open the billing modal.
+         *
+         * Billing endpoints are excluded to avoid reopening the same modal
+         * when a checkout or credit request itself fails.
+         */
+        const isBillingRequest =
+          path.startsWith('/api/v1/payments/') ||
+          path.startsWith('/api/v1/credits/') ||
+          path.startsWith('/api/v1/subscriptions/')
+
+        if (
+          response.status === 402 &&
+          !isBillingRequest &&
+          typeof window !== 'undefined'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent<CreditLimitReachedEventDetail>(
+              CREDIT_LIMIT_REACHED_EVENT,
+              {
+                detail: {
+                  message,
+                  path,
+                  status: response.status,
+                  data: responseData,
+                },
+              },
+            ),
+          )
+        }
+
+        throw apiError
       }
 
       return responseData as TResponse
     } catch (error) {
+      /*
+       * Preserve errors that already came from the API client,
+       * including 401, 402, validation errors and server errors.
+       */
       if (error instanceof ApiClientError) {
         throw error
       }
 
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new ApiClientError('Request timed out. Please try again.')
+      /*
+       * AbortError may be caused by the configured request timeout
+       * or by another AbortController.
+       */
+      if (
+        error instanceof DOMException &&
+        error.name === 'AbortError'
+      ) {
+        throw new ApiClientError(
+          'Request timed out. Please try again.',
+          408,
+          null,
+        )
       }
 
-      throw new ApiClientError('Network error. Please check your connection and try again.')
+      debugLog(`Network request failed for ${path}`, error)
+
+      throw new ApiClientError(
+        'Network error. Please check your connection and try again.',
+        0,
+        null,
+      )
     }
   }
 }
@@ -453,4 +566,9 @@ export function getApiClientErrorMessage(error: unknown, fallbackMessage: string
   }
 
   return fallbackMessage
+}
+export function isInsufficientCreditsError(
+  error: unknown,
+): error is ApiClientError {
+  return error instanceof ApiClientError && error.status === 402
 }

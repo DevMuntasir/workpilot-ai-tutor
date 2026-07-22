@@ -54,12 +54,12 @@ const outputOptions: Array<{
     description: 'Front/back cards for rapid recall.',
     icon: Layers,
   },
-  {
-    id: 'podcast',
-    label: 'Podcast',
-    description: 'Audio-style talking points for listening practice.',
-    icon: Headphones,
-  },
+  // {
+  //   id: 'podcast',
+  //   label: 'Podcast',
+  //   description: 'Audio-style talking points for listening practice.',
+  //   icon: Headphones,
+  // },
   {
     id: 'tutorLesson',
     label: 'Tutor Lesson',

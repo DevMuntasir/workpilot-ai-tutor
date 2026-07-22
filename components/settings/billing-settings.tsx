@@ -20,9 +20,11 @@ import {
   type RecentInvoice,
   type SubscriptionPlan,
 } from '@/lib/api'
+import { CreditLimitReachedEventDetail } from '@/lib/api/client'
 
 type BillingSettingsProps = {
-  isActive: boolean
+  isActive: boolean,
+  creditLimitDetails?: CreditLimitReachedEventDetail | null
 }
 
 const BILLING_QUERY_KEY = 'billing'
@@ -109,7 +111,7 @@ function CurrentPlanSkeleton() {
   )
 }
 
-export default function BillingSettings({ isActive }: BillingSettingsProps) {
+export default function BillingSettings({ isActive, creditLimitDetails = null }: BillingSettingsProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -311,11 +313,57 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
           </Button>
         )}
       </div>
+      {creditLimitDetails && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
 
+          <div>
+            <h3 className="font-semibold">
+              You’ve reached your credit limit
+            </h3>
+
+            <p className="mt-1 text-sm">
+              {creditLimitDetails.message ||
+                'You do not have enough credits to complete this action. Buy a credit pack or upgrade your plan to continue.'}
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  document
+                    .getElementById('credit-packs')
+                    ?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    })
+                }}
+              >
+                Buy credits
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  document
+                    .getElementById('subscription-plans')
+                    ?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    })
+                }}
+              >
+                Upgrade plan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {isLoading && !hasLoaded ? (
         <CurrentPlanSkeleton />
       ) : (
-        <Card className="border-border">
+          <Card className="border-border" id="credit-packs" >
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -383,7 +431,7 @@ export default function BillingSettings({ isActive }: BillingSettingsProps) {
         </Card>
       )}
 
-      <Card className="border-border">
+      <Card  id="subscription-plans"  className="border-border">
         <CardHeader>
           <CardTitle>Upgrade Plans</CardTitle>
           <CardDescription>Available paid plans.</CardDescription>
