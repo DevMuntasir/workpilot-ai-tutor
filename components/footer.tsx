@@ -9,7 +9,7 @@ import {
 type FooterLink = { name: string; href: string };
 
 const pages: FooterLink[] = [
-  { name: "Features", href: "/#features" },
+  { name: "Features", href: "/features" },
   { name: "Pricing", href: "/#pricing" },
   { name: "Contact Us", href: "/contact" },
 ];
@@ -21,6 +21,7 @@ const legal: FooterLink[] = [
 ];
 
 const register: FooterLink[] = [
+  { name: "Sign Up", href: "/signup" },
   { name: "Login", href: "/login" },
   { name: "Get Support", href: "/contact" },
 ];

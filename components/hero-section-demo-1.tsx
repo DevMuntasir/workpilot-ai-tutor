@@ -42,8 +42,8 @@ export default function Hero() {
     >
       {/* Animated decorative background */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        {/* Moving grid */}
-        <div className="hero-grid absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]" />
+        {/* Dotted fade pattern shared with the Features hero */}
+        <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(#5B65E0_0.7px,transparent_0.7px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
 
         {/* Cursor spotlight */}
         <motion.div className="absolute inset-0" style={{ background: spotlight }} />

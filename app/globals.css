@@ -167,7 +167,7 @@ html.lenis body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-button to-thirdary  px-6 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(12,20,121,0.28)] transition-transform duration-300 hover:-translate-y-1;
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-button to-thirdary  px-6 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(12,20,121,0.28)] transition-transform duration-300 hover:-translate-y-1;
   }
 }
 

@@ -40,7 +40,7 @@ WorkPilot turns your study material into interactive learning experiences: study
 
 ## Notes
 
-- This is a **login-only** product: user accounts are provisioned on the backend; there is no public signup.
+- Users can create accounts with Firebase email/password authentication; the backend provisions the application session from the Firebase ID token.
 - Study sets, syllabus analyses, and grader results are cached in browser localStorage per device; source-of-truth generation data lives on the backend.
 - Admin portal lives at `/admin` (requires an admin role); the student dashboard is at `/dashboard`.
 - Backend response shapes are documented in `API_RESPONSE_FORMATS.md`.

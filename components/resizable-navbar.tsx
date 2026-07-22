@@ -21,7 +21,7 @@ import { getPortalRouteByRole } from "@/lib/api/auth.service";
 const navItems = [
   {
     name: "Features",
-    link: "#features",
+    link: "/features",
   },
   {
     name: "Pricing",
