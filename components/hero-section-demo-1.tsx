@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionTemplate, useMotionValue } from "motion/react";
-import { ArrowRight, Check, FileText, MessageSquareText, Sparkles } from "lucide-react";
+import { ArrowRight, Check, FileText, MessageSquareText, Play, PlayCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -19,12 +19,13 @@ export default function Hero() {
         x.set(((event.clientX - bounds.left) / bounds.width) * 100);
         y.set(((event.clientY - bounds.top) / bounds.height) * 100);
       }}
-      className="relative overflow-hidden border-b border-stone-200/80 bg-[#fcfaf8] px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8 lg:pb-28"
+      className="relative overflow-hidden border-b border-stone-200/80 bg-[#fcfaf8] px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8 lg:pb-28 h-[calc(100svh-70px)]"
     >
+      {/* <div className="pointer-events-none absolute left-1/2 top-[-18rem] h-[38rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(91,101,224,0.18),rgba(81,0,167,0.08)_45%,transparent_72%)]" /> */}
       <motion.div style={{ background: glow }} className="pointer-events-none absolute inset-0" />
       <div className="pointer-events-none absolute inset-0 landing-grid opacity-70" />
       <div className="pointer-events-none absolute left-1/2 top-12 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-slate-200/35 blur-[110px]" />
-
+      <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(#5B65E0_0.7px,transparent_0.7px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
       <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.02fr_.98fr] lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -60,18 +61,18 @@ export default function Hero() {
               Start learning free
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link href="/features" className="landing-secondary">
-              Explore the workspace
+            <Link href="/features" className="landing-secondary " >
+              <PlayCircle className="mr-1"/>Explore Demo
             </Link>
           </div>
 
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
+          {/* <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
             {["No card required", "Set up in minutes", "Built for every subject"].map((item) => (
               <span key={item} className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" /> {item}
               </span>
             ))}
-          </div>
+          </div> */}
         </motion.div>
 
         <motion.div
