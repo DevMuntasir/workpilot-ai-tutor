@@ -14,8 +14,9 @@ import { Input } from '@/components/ui/input'
 import { createFirebaseSession } from '@/lib/api/auth.service'
 import { getApiClientErrorMessage } from '@/lib/api/client'
 import { clearAuthBrowserState, getStoredAuthObject, saveAuthObject } from '@/lib/api/session-storage'
+import { getPostLoginDestination } from '@/lib/auth-redirect'
 import { auth, googleProvider, isFirebaseConfigured } from '@/lib/firebase'
-import { flattenPermissionKeys, getPortalRouteByPermissions } from '@/lib/rbac/permissions'
+import { flattenPermissionKeys } from '@/lib/rbac/permissions'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -43,7 +44,14 @@ export default function LoginPage() {
       return
     }
 
-    router.replace(getPortalRouteByPermissions(storedAuth.user_role, storedAuth.flattened_permission_keys ?? []))
+    const destination = new URLSearchParams(window.location.search).get('next')
+    router.replace(
+      getPostLoginDestination(
+        destination,
+        storedAuth.user_role,
+        storedAuth.flattened_permission_keys ?? [],
+      ),
+    )
   }, [router])
 
   if (!authCheckComplete) {
@@ -61,14 +69,17 @@ export default function LoginPage() {
       deviceType: 'web',
     })
 
+    const permissionKeys = flattenPermissionKeys(session.permissions)
+
     saveAuthObject({
       ...session.auth,
       user_role: session.user.role,
       user_display_name: session.user.display_name,
       user_permissions: session.permissions,
-      flattened_permission_keys: flattenPermissionKeys(session.permissions),
+      flattened_permission_keys: permissionKeys,
     })
-    router.replace(getPortalRouteByPermissions(session.user.role, flattenPermissionKeys(session.permissions)))
+    const destination = new URLSearchParams(window.location.search).get('next')
+    router.replace(getPostLoginDestination(destination, session.user.role, permissionKeys))
   }
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {

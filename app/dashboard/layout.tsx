@@ -8,7 +8,9 @@ import { deleteCurrentSession, getPortalRouteByRole } from '@/lib/api/auth.servi
 import { fetchCurrentSubscription } from '@/lib/api/billing.service'
 import { apiClient, CREDIT_LIMIT_REACHED_EVENT, CreditLimitReachedEventDetail } from '@/lib/api/client'
 import { clearAuthBrowserState, getStoredAuthObject, replaceStoredAuthObject } from '@/lib/api/session-storage'
+import { getLoginUrl } from '@/lib/auth-redirect'
 import { auth } from '@/lib/firebase'
+import { AUTH_SESSION_CHANGE_EVENT } from '@/lib/rbac/permissions'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import {
   BookOpen,
@@ -24,7 +26,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 
 const sectionIconMap: Record<string, any> = {
   notes: FileText,
@@ -61,6 +63,7 @@ function DashboardLayoutContent({
   const [showPersonalizationOnboarding, setShowPersonalizationOnboarding] = useState(false)
   const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>('personalizedAi')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const isManualLogoutRef = useRef(false)
   const [footerProfileName, setFooterProfileName] = useState('Account')
   const [footerPlanName, setFooterPlanName] = useState<string | null>(null)
   const router = useRouter()
@@ -76,6 +79,7 @@ function DashboardLayoutContent({
     }
 
     setIsLoggingOut(true)
+    isManualLogoutRef.current = true
 
     await deleteCurrentSession().catch(() => null)
 
@@ -124,23 +128,37 @@ function DashboardLayoutContent({
   }, [])
 
   useEffect(() => {
-    const storedAuth = getStoredAuthObject()
+    const syncAuthState = () => {
+      const storedAuth = getStoredAuthObject()
 
-    if (!storedAuth?.access_token) {
-      router.replace('/login')
-      return
+      if (!storedAuth?.access_token) {
+        if (!isManualLogoutRef.current) {
+          router.replace(getLoginUrl())
+        }
+        return
+      }
+
+      setFooterProfileName(storedAuth.user_display_name?.trim() || auth?.currentUser?.displayName?.trim() || 'Account')
+
+      if (storedAuth.user_role === 'admin') {
+        router.replace(getPortalRouteByRole(storedAuth.user_role))
+        return
+      }
+
+      const hasSeenPersonalizationOnboarding = window.localStorage.getItem(PERSONALIZATION_ONBOARDING_KEY) === 'true'
+      if (!hasSeenPersonalizationOnboarding) {
+        window.localStorage.setItem(PERSONALIZATION_ONBOARDING_KEY, 'true')
+        setShowPersonalizationOnboarding(true)
+      }
     }
 
-    setFooterProfileName(storedAuth.user_display_name?.trim() || auth?.currentUser?.displayName?.trim() || 'Account')
+    syncAuthState()
+    window.addEventListener('storage', syncAuthState)
+    window.addEventListener(AUTH_SESSION_CHANGE_EVENT, syncAuthState)
 
-    if (storedAuth.user_role === 'admin') {
-      router.replace(getPortalRouteByRole(storedAuth.user_role))
-    }
-
-    const hasSeenPersonalizationOnboarding = window.localStorage.getItem(PERSONALIZATION_ONBOARDING_KEY) === 'true'
-    if (!hasSeenPersonalizationOnboarding) {
-      window.localStorage.setItem(PERSONALIZATION_ONBOARDING_KEY, 'true')
-      setShowPersonalizationOnboarding(true)
+    return () => {
+      window.removeEventListener('storage', syncAuthState)
+      window.removeEventListener(AUTH_SESSION_CHANGE_EVENT, syncAuthState)
     }
   }, [router])
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Bot, Coins, LayoutDashboard, PanelsTopLeft, ShieldCheck, Users } from 'lucide-react'
 import { signOut } from 'firebase/auth'
@@ -10,6 +10,8 @@ import { apiClient } from '@/lib/api/client'
 import { deleteCurrentSession, getPortalRouteByRole } from '@/lib/api/auth.service'
 import { auth } from '@/lib/firebase'
 import { clearAuthBrowserState, getStoredAuthObject } from '@/lib/api/session-storage'
+import { getLoginUrl } from '@/lib/auth-redirect'
+import { AUTH_SESSION_CHANGE_EVENT } from '@/lib/rbac/permissions'
 
 const adminNavItems: PortalNavItem[] = [
   {
@@ -51,6 +53,7 @@ export default function AdminLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const isManualLogoutRef = useRef(false)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -60,16 +63,28 @@ export default function AdminLayout({
 
   // Client-side gate only for UX; the backend independently enforces admin permissions.
   useEffect(() => {
-    const storedAuth = getStoredAuthObject()
+    const syncAuthState = () => {
+      const storedAuth = getStoredAuthObject()
 
-    if (!storedAuth?.access_token) {
-      clearAuthBrowserState()
-      router.replace('/login')
-      return
+      if (!storedAuth?.access_token) {
+        if (!isManualLogoutRef.current) {
+          router.replace(getLoginUrl())
+        }
+        return
+      }
+
+      if (storedAuth.user_role !== 'admin') {
+        router.replace(getPortalRouteByRole(storedAuth.user_role))
+      }
     }
 
-    if (storedAuth.user_role !== 'admin') {
-      router.replace(getPortalRouteByRole(storedAuth.user_role))
+    syncAuthState()
+    window.addEventListener('storage', syncAuthState)
+    window.addEventListener(AUTH_SESSION_CHANGE_EVENT, syncAuthState)
+
+    return () => {
+      window.removeEventListener('storage', syncAuthState)
+      window.removeEventListener(AUTH_SESSION_CHANGE_EVENT, syncAuthState)
     }
   }, [router])
 
@@ -79,6 +94,7 @@ export default function AdminLayout({
     }
 
     setIsLoggingOut(true)
+    isManualLogoutRef.current = true
 
     await deleteCurrentSession().catch(() => null)
 

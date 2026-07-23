@@ -5,6 +5,7 @@ import { LoaderCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { useRbac } from '@/hooks/use-rbac'
+import { getLoginUrl } from '@/lib/auth-redirect'
 
 type RouteGuardProps = {
   children: ReactNode
@@ -49,7 +50,11 @@ export function RouteGuard({
     }
 
     if (!isAuthenticated && redirectUnauthenticatedTo) {
-      router.replace(redirectUnauthenticatedTo)
+      router.replace(
+        redirectUnauthenticatedTo === '/login'
+          ? getLoginUrl()
+          : redirectUnauthenticatedTo,
+      )
       return
     }
 
