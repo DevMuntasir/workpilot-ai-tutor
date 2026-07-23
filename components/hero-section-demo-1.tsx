@@ -4,6 +4,7 @@ import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 import { ArrowRight, Check, FileText, MessageSquareText, Play, PlayCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Meteors } from "@/components/ui/meteors";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -57,9 +58,16 @@ export default function Hero() {
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link href="/signup" className="landing-primary group">
-              Start learning free
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <Link
+              href="/signup"
+              className="landing-primary group relative isolate overflow-hidden"
+            >
+              <Meteors
+                number={16}
+                className="pointer-events-none bg-white/90 before:from-white/80"
+              />
+              <span className="relative z-10">Start learning free</span>
+              <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link href="/features" className="landing-secondary " >
               <PlayCircle className="mr-1"/>Explore Demo
