@@ -24,6 +24,10 @@ const navItems = [
     link: "/features",
   },
   {
+    name: "App",
+    link: "#app",
+  },
+  {
     name: "Pricing",
     link: "#pricing",
   },

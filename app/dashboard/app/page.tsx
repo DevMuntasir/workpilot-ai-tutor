@@ -111,7 +111,7 @@ export default function MobileAppPage() {
         className="absolute bottom-[4%] right-[8%] h-80 w-80 rounded-full bg-accent/10 blur-3xl"
       />
 
-      <div className="relative mx-auto grid min-h-[calc(100vh-70px)]  items-center  px-6 py-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.85fr)] lg:px-10 lg:py-16 ">
+      <div className="relative container mx-auto grid min-h-[calc(100vh-70px)]  items-center  px-6 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.85fr)] lg:px-10 lg:py-10 ">
         <section className="mx-auto w-full  lg:mx-0 lg:pl-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-4 py-2 text-sm font-medium text-primary">
             <Smartphone className="h-4 w-4" />

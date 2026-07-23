@@ -1,6 +1,7 @@
 import Footer from "@/components/footer";
 import Hero from "@/components/hero-section-demo-1";
 import BrandScrollVelocitySection from "@/components/home/brand-scroll-section";
+import AppPromotionSection from "@/components/home/app-promotion-section";
 import FeaturesSection from "@/components/home/features-section";
 import PricingSection from "@/components/home/pricing";
 import Nav from "@/components/resizable-navbar";
@@ -15,6 +16,7 @@ export default function LandingPage() {
             <div className=" w-full">
               <Hero />
               <FeaturesSection />
+              <AppPromotionSection />
               <PricingSection />
               <BrandScrollVelocitySection />
               <Footer />
