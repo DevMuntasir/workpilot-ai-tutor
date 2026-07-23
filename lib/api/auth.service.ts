@@ -15,6 +15,7 @@ type SessionUser = {
   role: string
   is_email_verified: boolean
   last_login_at: string | null
+  onboarding: boolean
 }
 
 type SessionMetadata = {
@@ -48,6 +49,7 @@ export type FirebaseSessionResponse = {
 }
 
 const SESSION_ENDPOINT = '/api/v1/auth/session'
+const ONBOARDING_ENDPOINT = '/api/v1/auth/onboarding'
 
 export type UserRole = 'student' | 'admin'
 
@@ -73,6 +75,16 @@ export async function createFirebaseSession(payload: CreateFirebaseSessionPayloa
 
 export async function refreshAccessToken(refreshToken: string) {
   return apiClient.refreshAccessToken(refreshToken)
+}
+
+export async function updateOnboarding(onboarding: boolean, signal?: AbortSignal) {
+  return apiClient.request<unknown>(ONBOARDING_ENDPOINT, {
+    method: 'PATCH',
+    body: {
+      onboarding,
+    },
+    signal,
+  })
 }
 
 export async function deleteCurrentSession() {

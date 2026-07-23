@@ -21,6 +21,7 @@ export type StoredAuthObject = {
   refresh_expires_at: string
   user_role?: string
   user_display_name?: string
+  user_onboarding?: boolean
   user_permissions?: SessionPermissions
   flattened_permission_keys?: string[]
 }
@@ -105,6 +106,7 @@ export function getStoredAuthObject(): StoredAuthObject | null {
       refresh_expires_at: parsedValue.refresh_expires_at,
       user_role: typeof parsedValue.user_role === 'string' ? parsedValue.user_role : undefined,
       user_display_name: typeof parsedValue.user_display_name === 'string' ? parsedValue.user_display_name : undefined,
+      user_onboarding: typeof parsedValue.user_onboarding === 'boolean' ? parsedValue.user_onboarding : undefined,
       user_permissions: normalizedPermissions,
       flattened_permission_keys:
         permissionKeys.length > 0
@@ -193,6 +195,7 @@ export function replaceStoredAuthObject(auth: StoredAuthObject) {
     ...auth,
     user_role: auth.user_role ?? currentAuth?.user_role,
     user_display_name: auth.user_display_name ?? currentAuth?.user_display_name,
+    user_onboarding: auth.user_onboarding ?? currentAuth?.user_onboarding,
     user_permissions: auth.user_permissions ?? currentAuth?.user_permissions,
     flattened_permission_keys: auth.flattened_permission_keys ?? currentAuth?.flattened_permission_keys,
   })

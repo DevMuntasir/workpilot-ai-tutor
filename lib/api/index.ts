@@ -26,6 +26,7 @@ export {
   deleteCurrentSession,
   getPortalRouteByRole,
   refreshAccessToken,
+  updateOnboarding,
 } from '@/lib/api/auth.service'
 export {
   cancelCurrentSubscription,

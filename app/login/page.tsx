@@ -3,9 +3,21 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { type ComponentType, type FormEvent, type ReactNode, useEffect, useState } from 'react'
+import {
+  type ComponentType,
+  type FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
 import { FirebaseError } from 'firebase/app'
-import { sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth'
+import {
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth'
 import { motion, useReducedMotion } from 'framer-motion'
 import { BookOpenCheck, Eye, EyeOff, FileText, GraduationCap, Layers3, ListChecks, LoaderCircle, Sparkles } from 'lucide-react'
 
@@ -36,6 +48,27 @@ export default function LoginPage() {
       ? ''
       : 'Firebase login is not configured. Check the public Firebase environment variables.'
 
+  const createSessionAndRedirect = useCallback(async (firebaseIdToken: string) => {
+    const session = await createFirebaseSession({
+      firebaseIdToken,
+      deviceName: getDeviceName(),
+      deviceType: 'web',
+    })
+
+    const permissionKeys = flattenPermissionKeys(session.permissions)
+
+    saveAuthObject({
+      ...session.auth,
+      user_role: session.user.role,
+      user_display_name: session.user.display_name,
+      user_onboarding: session.user.onboarding,
+      user_permissions: session.permissions,
+      flattened_permission_keys: permissionKeys,
+    })
+    const destination = new URLSearchParams(window.location.search).get('next')
+    router.replace(getPostLoginDestination(destination, session.user.role, permissionKeys))
+  }, [router])
+
   useEffect(() => {
     const storedAuth = getStoredAuthObject()
 
@@ -60,26 +93,6 @@ export default function LoginPage() {
         <LoaderCircle className="h-8 w-8 animate-spin" />
       </main>
     )
-  }
-
-  const createSessionAndRedirect = async (firebaseIdToken: string) => {
-    const session = await createFirebaseSession({
-      firebaseIdToken,
-      deviceName: getDeviceName(),
-      deviceType: 'web',
-    })
-
-    const permissionKeys = flattenPermissionKeys(session.permissions)
-
-    saveAuthObject({
-      ...session.auth,
-      user_role: session.user.role,
-      user_display_name: session.user.display_name,
-      user_permissions: session.permissions,
-      flattened_permission_keys: permissionKeys,
-    })
-    const destination = new URLSearchParams(window.location.search).get('next')
-    router.replace(getPostLoginDestination(destination, session.user.role, permissionKeys))
   }
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -135,6 +148,26 @@ export default function LoginPage() {
     }
   }
 
+  /*
+   * Future full-page Google redirect flow:
+   *
+   * 1. Import `getRedirectResult` and `signInWithRedirect` from `firebase/auth`.
+   * 2. Replace the popup call below with:
+   *
+   *    googleProvider.setCustomParameters({ prompt: 'select_account' })
+   *    await signInWithRedirect(auth, googleProvider)
+   *
+   * 3. On page load, complete the returned redirect before showing the login form:
+   *
+   *    const credential = await getRedirectResult(auth)
+   *    if (credential) {
+   *      const firebaseIdToken = await credential.user.getIdToken()
+   *      await createSessionAndRedirect(firebaseIdToken)
+   *    }
+   *
+   * Before enabling it, configure a same-domain Firebase auth helper/proxy so
+   * browsers that block third-party storage do not lose the redirect result.
+   */
   const handleGoogleLogin = async () => {
     if (isSubmitting) {
       return

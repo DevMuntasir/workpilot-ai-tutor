@@ -39,8 +39,6 @@ const sectionIconMap: Record<string, any> = {
   content: BookOpen,
 }
 
-const PERSONALIZATION_ONBOARDING_KEY = 'Neurova_personalization_onboarding_seen'
-
 function DashboardLayoutShell({
   children,
 }: {
@@ -64,6 +62,7 @@ function DashboardLayoutContent({
   const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>('personalizedAi')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isManualLogoutRef = useRef(false)
+  const hasCheckedOnboardingRef = useRef(false)
   const [footerProfileName, setFooterProfileName] = useState('Account')
   const [footerPlanName, setFooterPlanName] = useState<string | null>(null)
   const router = useRouter()
@@ -145,10 +144,9 @@ function DashboardLayoutContent({
         return
       }
 
-      const hasSeenPersonalizationOnboarding = window.localStorage.getItem(PERSONALIZATION_ONBOARDING_KEY) === 'true'
-      if (!hasSeenPersonalizationOnboarding) {
-        window.localStorage.setItem(PERSONALIZATION_ONBOARDING_KEY, 'true')
-        setShowPersonalizationOnboarding(true)
+      if (!hasCheckedOnboardingRef.current && typeof storedAuth.user_onboarding === 'boolean') {
+        hasCheckedOnboardingRef.current = true
+        setShowPersonalizationOnboarding(!storedAuth.user_onboarding)
       }
     }
 
@@ -327,7 +325,19 @@ function DashboardLayoutContent({
       </PortalShell>
 
       {showPersonalizationOnboarding && (
-        <PersonalizedAiOnboardingModal onClose={() => setShowPersonalizationOnboarding(false)} />
+        <PersonalizedAiOnboardingModal
+          onClose={() => setShowPersonalizationOnboarding(false)}
+          onOnboardingComplete={() => {
+            const storedAuth = getStoredAuthObject()
+
+            if (storedAuth && storedAuth.user_onboarding !== true) {
+              replaceStoredAuthObject({
+                ...storedAuth,
+                user_onboarding: true,
+              })
+            }
+          }}
+        />
       )}
 
       {showSettingsModal && (

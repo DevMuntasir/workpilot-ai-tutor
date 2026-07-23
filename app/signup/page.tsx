@@ -78,6 +78,7 @@ export default function SignupPage() {
         ...session.auth,
         user_role: session.user.role,
         user_display_name: session.user.display_name || displayName,
+        user_onboarding: session.user.onboarding,
         user_permissions: session.permissions,
         flattened_permission_keys: permissionKeys,
       })

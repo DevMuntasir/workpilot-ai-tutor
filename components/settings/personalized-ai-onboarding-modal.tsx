@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, CircleCheck, LoaderCircle, Sparkles, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { getApiClientErrorMessage } from '@/lib/api'
+import { getApiClientErrorMessage, updateOnboarding } from '@/lib/api'
 import {
   buildLearningPreferenceInstructions,
   emptyLearningPreferences,
@@ -15,25 +15,32 @@ export type PersonalizationOnboardingDraft = LearningPreferences
 
 type PersonalizationOnboardingModalProps = {
   onClose: () => void
+  onOnboardingComplete: () => void
 }
 
-export default function PersonalizedAiOnboardingModal({ onClose }: PersonalizationOnboardingModalProps) {
+export default function PersonalizedAiOnboardingModal({
+  onClose,
+  onOnboardingComplete,
+}: PersonalizationOnboardingModalProps) {
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(0)
   const [draft, setDraft] = useState<PersonalizationOnboardingDraft>(emptyLearningPreferences)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUpdatingOnboarding, setIsUpdatingOnboarding] = useState(false)
+  const [hasUpdatedOnboarding, setHasUpdatedOnboarding] = useState(false)
 
   const step = learningPreferenceQuestions[currentStep]
   const selectedValue = draft[step.id]
   const isLastStep = currentStep === learningPreferenceQuestions.length - 1
   const canContinue = useMemo(() => Boolean(selectedValue), [selectedValue])
+  const isBusy = isSaving || isUpdatingOnboarding
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isSaving) onClose()
+      if (event.key === 'Escape' && !isBusy) onClose()
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -41,15 +48,47 @@ export default function PersonalizedAiOnboardingModal({ onClose }: Personalizati
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isSaving, onClose])
+  }, [isBusy, onClose])
 
   const selectOption = (value: string) => {
     setDraft((current) => ({ ...current, [step.id]: value }))
   }
 
+  const completeOnboardingStep = async () => {
+    if (hasUpdatedOnboarding) {
+      return true
+    }
+
+    setIsUpdatingOnboarding(true)
+
+    try {
+      await updateOnboarding(true)
+      setHasUpdatedOnboarding(true)
+      onOnboardingComplete()
+      return true
+    } catch (error) {
+      toast({
+        title: 'Unable to update onboarding progress',
+        description: getApiClientErrorMessage(error, 'Your onboarding progress could not be saved.'),
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      setIsUpdatingOnboarding(false)
+    }
+  }
+
+  const handleContinue = async () => {
+    if (!canContinue || isBusy || !(await completeOnboardingStep())) {
+      return
+    }
+
+    setCurrentStep((current) => Math.min(learningPreferenceQuestions.length - 1, current + 1))
+  }
+
   const handleFinish = async () => {
     const instructions = buildLearningPreferenceInstructions(draft)
-    if (!instructions) return
+    if (!instructions || isBusy || !(await completeOnboardingStep())) return
 
     setIsSaving(true)
 
@@ -71,7 +110,7 @@ export default function PersonalizedAiOnboardingModal({ onClose }: Personalizati
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/35 p-0 backdrop-blur-sm sm:p-6 dark:bg-black/65"
-      onClick={() => !isSaving && onClose()}
+      onClick={() => !isBusy && onClose()}
       role="presentation"
     >
       <div
@@ -110,7 +149,7 @@ export default function PersonalizedAiOnboardingModal({ onClose }: Personalizati
             <button
               type="button"
               onClick={onClose}
-              disabled={isSaving}
+              disabled={isBusy}
               className="-mr-2 -mt-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
               aria-label="Close onboarding modal"
             >
@@ -164,7 +203,7 @@ export default function PersonalizedAiOnboardingModal({ onClose }: Personalizati
           <button
             type="button"
             onClick={() => setCurrentStep((current) => Math.max(0, current - 1))}
-            disabled={currentStep === 0 || isSaving}
+            disabled={currentStep === 0 || isBusy}
             className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-35"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -175,7 +214,7 @@ export default function PersonalizedAiOnboardingModal({ onClose }: Personalizati
             <button
               type="button"
               onClick={() => void handleFinish()}
-              disabled={!canContinue || isSaving}
+              disabled={!canContinue || isBusy}
               className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-45"
             >
               {isSaving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -184,8 +223,8 @@ export default function PersonalizedAiOnboardingModal({ onClose }: Personalizati
           ) : (
             <button
               type="button"
-              onClick={() => setCurrentStep((current) => Math.min(learningPreferenceQuestions.length - 1, current + 1))}
-              disabled={!canContinue || isSaving}
+              onClick={() => void handleContinue()}
+              disabled={!canContinue || isBusy}
               className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-45"
             >
               Continue
