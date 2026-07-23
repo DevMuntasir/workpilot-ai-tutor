@@ -192,6 +192,44 @@ function getFallbackMessageForStatus(status: number): string {
   return `Request failed (${status}). Please try again.`
 }
 
+function isCreditLimitResponse(status: number, data: unknown, message: string) {
+  if (status === 402) {
+    return true
+  }
+
+  /*
+   * Some generation APIs return a validation/permission status with a
+   * machine-readable insufficient-credit code instead of HTTP 402. Keep the
+   * detector deliberately narrow so unrelated token/auth errors do not open
+   * the billing experience.
+   */
+  if (![400, 403, 409, 422].includes(status)) {
+    return false
+  }
+
+  let serializedData = ''
+
+  try {
+    serializedData = JSON.stringify(data)
+  } catch {
+    serializedData = ''
+  }
+
+  const normalized = `${message} ${serializedData}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
+  return (
+    /\b(?:insufficient|not enough|out of|exhausted|depleted)\b.{0,48}\b(?:credits?|token credits?)\b/.test(
+      normalized,
+    ) ||
+    /\b(?:credits?|token credits?)\b.{0,48}\b(?:insufficient|exhausted|depleted|limit reached|limit exceeded)\b/.test(
+      normalized,
+    )
+  )
+}
+
 function parseResponsePayload(responseText: string): unknown {
   if (!responseText) {
     return null
@@ -488,8 +526,8 @@ export class ApiClient {
         )
 
         /*
-         * A 402 response means the user does not have enough credits.
-         * Dispatch a global event so the dashboard can open the billing modal.
+         * Dispatch a global event when the API reports an exhausted balance so
+         * the dashboard can open the focused upgrade experience.
          *
          * Billing endpoints are excluded to avoid reopening the same modal
          * when a checkout or credit request itself fails.
@@ -500,7 +538,7 @@ export class ApiClient {
           path.startsWith('/api/v1/subscriptions/')
 
         if (
-          response.status === 402 &&
+          isCreditLimitResponse(response.status, responseData, message) &&
           !isBillingRequest &&
           typeof window !== 'undefined'
         ) {
@@ -570,5 +608,8 @@ export function getApiClientErrorMessage(error: unknown, fallbackMessage: string
 export function isInsufficientCreditsError(
   error: unknown,
 ): error is ApiClientError {
-  return error instanceof ApiClientError && error.status === 402
+  return (
+    error instanceof ApiClientError &&
+    isCreditLimitResponse(error.status, error.data, error.message)
+  )
 }

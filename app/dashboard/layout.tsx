@@ -2,6 +2,7 @@
 
 import { PortalShell, type PortalNavItem } from '@/components/portal/portal-shell'
 import PersonalizedAiOnboardingModal from '@/components/settings/personalized-ai-onboarding-modal'
+import InsufficientCreditsModal from '@/components/settings/insufficient-credits-modal'
 import SettingsModal, { type SettingsTab } from '@/components/settings/settings-modal'
 import { getStoredStudySetById, getStoredStudySets, type StudySet } from '@/components/study-sets/utils'
 import { deleteCurrentSession, getPortalRouteByRole } from '@/lib/api/auth.service'
@@ -72,6 +73,8 @@ function DashboardLayoutContent({
   const billingState = searchParams.get('billing')
   const [creditLimitDetails, setCreditLimitDetails] =
     useState<CreditLimitReachedEventDetail | null>(null)
+  const [showCreditUpgradeModal, setShowCreditUpgradeModal] =
+    useState(true)
   const handleLogout = async () => {
     if (isLoggingOut) {
       return
@@ -251,9 +254,8 @@ function DashboardLayoutContent({
       const creditEvent =
         event as CustomEvent<CreditLimitReachedEventDetail>
 
-      setCreditLimitDetails(creditEvent.detail)
-      setSettingsInitialTab('billing')
-      setShowSettingsModal(true)
+      setCreditLimitDetails(creditEvent.detail ?? null)
+      setShowCreditUpgradeModal(true)
     }
 
     window.addEventListener(
@@ -347,6 +349,21 @@ function DashboardLayoutContent({
           onClose={() => {
             setShowSettingsModal(false)
             setCreditLimitDetails(null)
+          }}
+        />
+      )}
+
+      {showCreditUpgradeModal && (
+        <InsufficientCreditsModal
+          details={creditLimitDetails}
+          onClose={() => {
+            setShowCreditUpgradeModal(false)
+            setCreditLimitDetails(null)
+          }}
+          onOpenBilling={() => {
+            setShowCreditUpgradeModal(false)
+            setSettingsInitialTab('billing')
+            setShowSettingsModal(true)
           }}
         />
       )}

@@ -322,9 +322,9 @@ export default function StudySetsPage() {
         initial="hidden"
         animate="visible"
       >
-        <div className="mx-auto w-full px-6 pb-12 pt-24 sm:px-8 lg:px-10">
+        <div className="mx-auto w-full px-6 pb-12 pt-14 sm:px-8 lg:px-10">
           <motion.section
-            className="mx-auto mb-28 max-w-4xl text-center sm:mb-32"
+            className="mx-auto mb-10 max-w-4xl text-center sm:mb-20"
             variants={heroContentVariants}
           >
             <motion.h1
@@ -349,7 +349,7 @@ export default function StudySetsPage() {
               <motion.button
                 type="button"
                 onClick={() => setShowUploadModal(true)}
-                className="group flex min-h-36 flex-col justify-between rounded-[15px] border border-border bg-card p-5 text-left transition-colors hover:border-foreground/20 hover:shadow-md"
+                className="group flex flex-col gap-2 rounded-[15px] border border-border bg-card p-5 text-left transition-colors hover:border-foreground/20 hover:shadow-md"
                 variants={uploadOptionVariants}
                 whileHover={{
                   y: -5,
@@ -395,7 +395,7 @@ export default function StudySetsPage() {
                 id="paste-content-btn"
                 type="button"
                 onClick={() => setShowPasteModal(true)}
-                className="group flex min-h-36 flex-col justify-between rounded-[15px] border border-border bg-card p-5 text-left transition-colors hover:border-foreground/20 hover:shadow-md"
+                className="group flex flex-col gap-2 rounded-[15px] border border-border bg-card p-5 text-left transition-colors hover:border-foreground/20 hover:shadow-md"
                 variants={uploadOptionVariants}
                 whileHover={{
                   y: -5,
