@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Folder, LogOut, Menu, Search, Settings as SettingsIcon, type LucideIcon, X } from 'lucide-react'
+import Image from 'next/image'
 
 export type PortalNavItem = {
   label: string
@@ -54,7 +55,7 @@ export function PortalShell({
       >
         <div className="h-[70px] items-center px-6 flex items-center border-b border-sidebar-border">
           <Link href={brandHref} className="flex items-center gap-2">
-            <div className="text-3xl font-bold text-primary">{brandLabel}</div>
+            <Image src="/logo.png" width={200} height={40} alt={brandLabel} />
           </Link>
         </div>
 

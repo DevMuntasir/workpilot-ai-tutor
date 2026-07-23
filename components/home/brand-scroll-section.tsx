@@ -18,10 +18,8 @@ export default function BrandScrollVelocitySection() {
       <div className="relative mx-auto max-w-7xl">
         <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-[.24em] text-slate-400">A calmer way to study</span>
             <h2 className="mt-4 text-3xl font-semibold tracking-[-.04em] sm:text-5xl">From upload to clarity in one flow.</h2>
           </div>
-          <p className="max-w-xl text-base leading-7 text-slate-400 lg:justify-self-end">Less time switching between disconnected tools. More time understanding, practising, and making measurable progress.</p>
         </motion.div>
 
         <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 lg:grid-cols-3">

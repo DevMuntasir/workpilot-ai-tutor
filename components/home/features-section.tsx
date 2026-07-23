@@ -226,7 +226,7 @@ function BentoCard({ feature }: { feature: Feature }) {
                 title={`Learn more about ${title}`}
                 href={href}
                 onMouseMove={handleMouseMove}
-                className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 sm:p-7 shadow-[0_10px_35px_rgba(15,23,42,0.05)] transition-all duration-300 group-hover:border-slate-300 group-hover:shadow-[0_25px_60px_rgba(15,23,42,0.10)]"
+                className="relative flex h-full flex-col overflow-hidden rounded-sm border border-slate-200/70 bg-white p-6 sm:p-7 shadow-[0_10px_35px_rgba(15,23,42,0.05)] transition-all duration-300 group-hover:border-slate-300 group-hover:shadow-[0_25px_60px_rgba(15,23,42,0.10)]"
             >
                 {/* cursor spotlight */}
                 <motion.div
@@ -239,7 +239,7 @@ function BentoCard({ feature }: { feature: Feature }) {
                 />
 
                 <motion.div
-                    className={`relative z-10 mb-5 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg transition-all duration-300 group-hover:shadow-xl`}
+                    className={`relative z-10 mb-5 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-sm bg-gradient-to-br ${gradient} text-white shadow-lg transition-all duration-300 group-hover:shadow-xl`}
                     whileHover={{ scale: 1.08, rotate: -4 }}
                     transition={{ duration: 0.3 }}
                 >
@@ -308,7 +308,7 @@ export default function FeaturesSection() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.3 }}
                     >
-                        From AI-powered summaries to interactive quizzes, WorkPilot provides all the tools you need to learn smarter, not harder.
+                        From AI-powered summaries to interactive quizzes, Neurova provides all the tools you need to learn smarter, not harder.
                     </motion.p>
                 </motion.div>
 
@@ -346,10 +346,10 @@ export default function FeaturesSection() {
                                 Ready to transform your learning?
                             </h3>
                             <p className="text-white/85 mb-8 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-                                Join thousands of students already learning smarter with WorkPilot. Start your free trial today and unlock your full potential.
+                                Join thousands of students already learning smarter with Neurova. Start your free trial today and unlock your full potential.
                             </p>
                             <motion.a
-                                title="Sign up for WorkPilot"
+                                title="Sign up for Neurova"
                                 className="inline-flex items-center justify-center gap-2 whitespace-nowrap bg-white text-thirdary hover:bg-white/90 px-8 sm:px-10 py-3.5 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                                 href="/signup"
                                 whileHover={{ scale: 1.04, y: -2 }}

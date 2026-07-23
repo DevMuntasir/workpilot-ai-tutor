@@ -10,7 +10,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 export default function Hero() {
   const x = useMotionValue(50);
   const y = useMotionValue(35);
-  const glow = useMotionTemplate`radial-gradient(520px circle at ${x}% ${y}%, rgba(91,101,224,.08), transparent 68%)`;
+  const glow = useMotionTemplate`radial-gradient(520px circle at ${x}% ${y}%, rgba(91,101,224,.1), transparent 68%)`;
 
   return (
     <section
@@ -52,7 +52,7 @@ export default function Hero() {
           </div> */}
 
           <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-            Study smarter with WorkPilot—an AI tutor that helps you understand,
+            Study smarter with Neurova AI tutor that helps you understand,
             not just memorize.
           </p>
 

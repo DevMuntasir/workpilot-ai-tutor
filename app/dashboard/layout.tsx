@@ -37,7 +37,7 @@ const sectionIconMap: Record<string, any> = {
   content: BookOpen,
 }
 
-const PERSONALIZATION_ONBOARDING_KEY = 'workpilot_personalization_onboarding_seen'
+const PERSONALIZATION_ONBOARDING_KEY = 'Neurova_personalization_onboarding_seen'
 
 function DashboardLayoutShell({
   children,
@@ -285,7 +285,7 @@ function DashboardLayoutContent({
     <>
       <PortalShell
         brandHref="/dashboard"
-        brandLabel="WorkPilot"
+        brandLabel="Neurova"
         navItems={resolvedNavItems}
         sidebarOpen={sidebarOpen}
         onSidebarToggle={() => setSidebarOpen((current) => !current)}

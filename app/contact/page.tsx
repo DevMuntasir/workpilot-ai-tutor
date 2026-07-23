@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Clock3, CreditCard, LifeBuoy, Mail, MessageSquareText } from "lucide-react";
 import { SitePageShell, SUPPORT_EMAIL } from "@/components/site-page-shell";
 
-export const metadata: Metadata = { title: "Contact Us | WorkPilot", description: "Contact WorkPilot for product, account, billing, or privacy support." };
+export const metadata: Metadata = { title: "Contact Us | Neurova", description: "Contact Neurova for product, account, billing, or privacy support." };
 
 const topics = [
   { icon: LifeBuoy, title: "Product support", text: "Questions about study sets, syllabus analysis, grading, or your account." },
@@ -18,7 +18,7 @@ export default function ContactPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Mail className="h-5 w-5" /></div>
           <h2 className="mt-6 text-2xl font-semibold tracking-tight text-slate-950">Email our support team</h2>
           <p className="mt-3 leading-7 text-slate-600">For the fastest help, email us from the address connected to your WorkPilot account and include the feature you were using, what happened, and any relevant error message.</p>
-          <a href={`mailto:${SUPPORT_EMAIL}?subject=WorkPilot support request`} className="mt-7 inline-flex rounded-full bg-gradient-to-r from-button to-thirdary px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5">{SUPPORT_EMAIL}</a>
+          <a href={`mailto:${SUPPORT_EMAIL}?subject=Neurova support request`} className="mt-7 inline-flex rounded-full bg-gradient-to-r from-button to-thirdary px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5">{SUPPORT_EMAIL}</a>
           <div className="mt-8 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
             <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <p><strong className="text-slate-800">Typical response:</strong> within 2 business days. Complex billing, privacy, or technical investigations may take longer.</p>

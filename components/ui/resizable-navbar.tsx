@@ -70,7 +70,7 @@ export const Navbar = ({ children, className }: NavbarProps) => {
     <motion.div
       ref={ref}
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("sticky inset-x-0 top-1 z-40 w-full", className)}
+      className={cn("sticky inset-x-0 top-0 z-40  ", className)}
     >
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
@@ -235,13 +235,13 @@ export const NavbarLogo = () => {
   return (
     <a
       href="#"
-      className="relative z-20 mr-4 flex items-center justify-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+      className="relative z-20 mr-4 flex items-center justify-center space-x-2 px-2 py-2 text-sm font-normal text-black"
     >
       <div className="text-3xl flex font-bold items-center gap-2   ">
-        <Image src='/logo-icon.png' alt="WorkPilot.AI" width={50} height={25} />
-        <span className="hidden text-shadow-md sm:inline-block mt-2 text-blue-900 font-extrabold">
+        <Image src='/logo.png' alt="Neurova.AI" width={180} height={40} />
+        {/* <span className="hidden text-shadow-md sm:inline-block mt-2 text-blue-900 font-extrabold">
           <span className="">Work</span>
-          Pilot</span>
+          Pilot</span> */}
       </div>
     </a>
   );

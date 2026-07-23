@@ -8,7 +8,7 @@ import {
 } from '@/lib/api/session-storage'
 import { auth } from '@/lib/firebase'
 export const CREDIT_LIMIT_REACHED_EVENT =
-  'workpilot:credit-limit-reached'
+  'Neurova:credit-limit-reached'
 
 export type CreditLimitReachedEventDetail = {
   message: string

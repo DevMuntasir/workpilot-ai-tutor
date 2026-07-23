@@ -45,8 +45,7 @@ export default function Footer() {
                 href="/"
                 className="relative z-20 flex items-center space-x-2 text-sm font-normal text-black dark:text-white"
               >
-                <Image src="/icon.png" alt="WorkPilot" width={30} height={30} />
-                <span className="text-lg font-semibold">WorkPilot</span>
+                <Image src="/logo.png" alt="Neurova" width={200} height={40} />
               </a>
               <p className="mt-4 leading-relaxed text-neutral-500 dark:text-neutral-400">
                 AI-powered study tools for turning your learning materials into notes, quizzes, flashcards, and actionable feedback.
@@ -76,12 +75,12 @@ export default function Footer() {
 
           <div className="mx-auto mt-12 max-w-7xl border-t border-neutral-100 py-6 dark:border-white/10">
             <p className="text-neutral-500 dark:text-neutral-400">
-              © {new Date().getFullYear()} WorkPilot. All rights reserved.
+              © {new Date().getFullYear()} Neurova. All rights reserved.
             </p>
           </div>
 
           <p className="select-none bg-linear-to-b from-neutral-100 to-slate-100 bg-clip-text text-center text-5xl font-bold tracking-[-.06em] text-transparent md:text-9xl lg:text-[12rem] xl:text-[13rem] dark:from-neutral-900 dark:to-neutral-950">
-            WorkPilot
+            Neurova
           </p>
         </div>
       </div>

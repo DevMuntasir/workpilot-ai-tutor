@@ -94,7 +94,7 @@ export default function AdminLayout({
   return (
     <PortalShell
       brandHref="/admin"
-      brandLabel="WorkPilot"
+      brandLabel="Neurova"
       navItems={adminNavItems.map((item) => ({
         ...item,
         isActive:

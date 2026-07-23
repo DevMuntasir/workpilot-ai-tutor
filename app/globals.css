@@ -12,10 +12,10 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #5B65E0;
-  --thirdary: #5100a7;
-  --buttons: #5B65E0;
-  --button-foreground: #5B65E0;
+  --primary: #1565F7;
+  --thirdary: #2563EB;
+  --buttons: #1565F7;
+  --button-foreground: #1565F7;
   --primary-foreground: #ffffff;
   --secondary: #f5f5f5;
   --secondary-foreground: #1a1a1a;
@@ -36,12 +36,12 @@
   --radius: 0.625rem;
   --sidebar: #f8f8ff;
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #5B65E0;
+  --sidebar-primary: #1565F7;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e7e9fb;
-  --sidebar-accent-foreground: #5B65E0;
+  --sidebar-accent-foreground: #1565F7;
   --sidebar-border: #E5D5C8;
-  --sidebar-ring: #5B65E0;
+  --sidebar-ring: #1565F7;
 }
 
 .dark {

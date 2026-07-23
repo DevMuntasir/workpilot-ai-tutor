@@ -10,7 +10,7 @@ type SitePageShellProps = {
   children: ReactNode;
 };
 
-export const SUPPORT_EMAIL = "support@workpilot.ai";
+export const SUPPORT_EMAIL = "support@neurova.ai";
 
 export function SitePageShell({ eyebrow, title, description, children }: SitePageShellProps) {
   return (
@@ -19,9 +19,9 @@ export function SitePageShell({ eyebrow, title, description, children }: SitePag
         <div className="pointer-events-none absolute -left-24 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="pointer-events-none absolute -right-24 top-0 h-80 w-80 rounded-full bg-thirdary/10 blur-3xl" />
         <header className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
-          <Link href="/" className="inline-flex items-center gap-3" aria-label="WorkPilot home">
+          <Link href="/" className="inline-flex items-center gap-3" aria-label="Neurova home">
             <Image src="/icon.png" alt="" width={34} height={34} />
-            <span className="text-lg font-semibold tracking-tight">WorkPilot</span>
+            <span className="text-lg font-semibold tracking-tight">Neurova</span>
           </Link>
           <Link
             href="/"
@@ -42,7 +42,7 @@ export function SitePageShell({ eyebrow, title, description, children }: SitePag
 
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <p>© {new Date().getFullYear()} WorkPilot. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Neurova. All rights reserved.</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Legal">
             <Link className="hover:text-slate-950" href="/privacy-policy">Privacy</Link>
             <Link className="hover:text-slate-950" href="/terms-of-service">Terms</Link>

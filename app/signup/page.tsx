@@ -107,7 +107,7 @@ export default function SignupPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* <Link href="/" className="inline-flex"><Image src="/logo.png" alt="WorkPilot" width={128} height={38} className="h-auto w-[116px] sm:w-[128px]" /></Link> */}
+              {/* <Link href="/" className="inline-flex"><Image src="/logo.png" alt="Neurova" width={128} height={38} className="h-auto w-[116px] sm:w-[128px]" /></Link> */}
 
               <div className="mb-[clamp(1rem,3vh,1.75rem)] mt-[clamp(1.25rem,4vh,2.5rem)]">
                 <h1 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-[2.35rem]">Create Account</h1>
@@ -138,7 +138,7 @@ export default function SignupPage() {
               <motion.div className="relative mx-auto w-[86%] rotate-2" animate={reduceMotion ? undefined : { y: [0, -8, 0], rotate: [2, 1, 2] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
                 <div className="absolute -inset-4 -rotate-[4deg] rounded-[28px] border border-white/15 bg-white/[0.07]" />
                 <div className="relative aspect-[1.32] overflow-hidden rounded-[24px] border border-white/30 bg-white/10 p-2.5 shadow-[0_38px_90px_rgba(18,12,62,0.4)]">
-                  <div className="relative h-full overflow-hidden rounded-[18px] bg-white/95"><Image src="/demo-1.png" alt="WorkPilot study workspace" fill priority sizes="(min-width: 1024px) 48vw, 0px" className="object-contain" /></div>
+                  <div className="relative h-full overflow-hidden rounded-[18px] bg-white/95"><Image src="/demo-1.png" alt="Neurova study workspace" fill priority sizes="(min-width: 1024px) 48vw, 0px" className="object-contain" /></div>
                 </div>
                 <StudyIcon className="-left-10 top-[14%]" icon={FileText} color="bg-blue-500" delay={0} reduceMotion={reduceMotion} />
                 <StudyIcon className="-right-9 top-[8%]" icon={Layers3} color="bg-amber-500" delay={0.4} reduceMotion={reduceMotion} />

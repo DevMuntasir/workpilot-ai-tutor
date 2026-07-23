@@ -240,27 +240,27 @@ export default function LoginPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* <div className="mb-[clamp(1.5rem,5vh,3rem)] flex items-start justify-between gap-4">
+              <div className="mb-[clamp(1.5rem,5vh,3rem)] flex items-center justify-center gap-4">
                 <Link href="/" className="inline-flex items-center">
                   <Image
                     src="/logo.png"
                     alt="WorkPilot"
-                    width={128}
-                    height={38}
-                    className="h-auto w-[116px] sm:w-[128px]"
+                    width={20}
+                    height={58}
+                    className="h-auto w-[180px] sm:w-[210px]"
                   />
                 </Link>
 
-              </div> */}
-
-              <div className="mb-[clamp(1.25rem,4vh,2.25rem)] w-full">
-                <h1 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-[2.35rem]">
-                  Hello Again!
-                </h1>
-                <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-[15px]">
-                  Welcome back you&apos;ve been missed!
-                </p>
               </div>
+
+              {/* <div className="mb-[clamp(1.25rem,4vh,2.25rem)] w-full"> */}
+                {/* <h1 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-[2.35rem]">
+                  Sign In!
+                </h1> */}
+                {/* <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-[15px]">
+                  Welcome back you&apos;ve been missed!
+                </p> */}
+              {/* </div> */}
 
               <SocialIconButton
                 label={isGoogleSigningIn ? 'Signing In...' : 'Continue with Google'}
