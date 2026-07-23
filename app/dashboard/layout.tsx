@@ -24,6 +24,7 @@ import {
   ListChecks,
   NotebookPen,
   PenSquare,
+  Smartphone,
   Sparkles,
 } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -115,7 +116,11 @@ function DashboardLayoutContent({
       href: '/dashboard/paper-grader',
       icon: ClipboardCheck,
     },
-    
+    {
+      label: 'App',
+      href: '/dashboard/app',
+      icon: Smartphone,
+    },
   ]
 
   const studySetId = useMemo(() => {
