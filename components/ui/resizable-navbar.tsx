@@ -101,7 +101,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         damping: 50,
       }}
       style={{
-        minWidth: "1100px",
+        minWidth: "min(900px, calc(100vw - 2rem))",
       }}
       className={cn(
         "relative z-[60] mx-auto hidden w-full max-w-7xl h-[70px] flex-row items-center justify-between self-start rounded-md bg-transparent px-4 py-2 lg:flex dark:bg-transparent",
@@ -206,7 +206,7 @@ export const MobileNavMenu = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className={cn(
-            "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-lg bg-white px-4 py-8 shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] dark:bg-neutral-950",
+            "absolute inset-x-0 top-16 z-50 flex max-h-[calc(100svh-5rem)] w-full flex-col items-start justify-start gap-3 overflow-y-auto rounded-xl bg-white px-3 py-5 shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] sm:px-4 sm:py-6 dark:bg-neutral-950",
             className,
           )}
         >
@@ -224,10 +224,16 @@ export const MobileNavToggle = ({
   isOpen: boolean;
   onClick: () => void;
 }) => {
-  return isOpen ? (
-    <IconX className="text-black dark:text-white" onClick={onClick} />
-  ) : (
-    <IconMenu2 className="text-black dark:text-white" onClick={onClick} />
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+      aria-expanded={isOpen}
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-black transition-colors hover:bg-neutral-100 active:bg-neutral-200 dark:text-white dark:hover:bg-neutral-800"
+    >
+      {isOpen ? <IconX className="h-6 w-6" /> : <IconMenu2 className="h-6 w-6" />}
+    </button>
   );
 };
 
@@ -238,7 +244,7 @@ export const NavbarLogo = () => {
       className="relative z-20 mr-4 flex items-center justify-center space-x-2 px-2 py-2 text-sm font-normal text-black"
     >
       <div className="text-3xl flex font-bold items-center gap-2   ">
-        <Image src='/logo.png' alt="Neurova.AI" width={180} height={40} />
+        <Image src='/logo.png' alt="Neurova.AI" width={180} height={40} className="h-auto w-[150px] sm:w-[180px]" />
         {/* <span className="hidden text-shadow-md sm:inline-block mt-2 text-blue-900 font-extrabold">
           <span className="">Work</span>
           Pilot</span> */}

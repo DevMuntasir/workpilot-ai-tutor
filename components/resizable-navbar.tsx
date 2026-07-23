@@ -66,7 +66,7 @@ export default function Nav({
   };
 
   return (
-    <div className={cn("relative w-full", className)}>
+    <div className={cn("relative min-w-0 w-full", className)}>
       <Navbar>
         {/* Desktop Navigation */}
         <NavBody>
@@ -120,7 +120,7 @@ export default function Nav({
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.06, duration: 0.2 }}
-                className="w-full rounded-md px-2 py-2 text-base font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white"
+                className="flex min-h-11 w-full items-center rounded-md px-3 py-2 text-base font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white"
               >
                 {item.name}
               </motion.a>

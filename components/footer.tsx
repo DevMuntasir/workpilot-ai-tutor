@@ -35,10 +35,10 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="overflow-hidden border-t border-slate-200 bg-slate-50 p-3 dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-neutral-950">
-        <div className="relative w-full overflow-hidden border-t border-neutral-100 bg-white px-6 pt-16 sm:px-10 dark:border-white/10 dark:bg-neutral-950">
-          <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-12 text-sm text-neutral-500 sm:flex-row">
+    <footer className="overflow-hidden border-t border-slate-200 bg-slate-50 p-2 sm:p-3 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm sm:rounded-2xl dark:bg-neutral-950">
+        <div className="relative w-full overflow-hidden border-t border-neutral-100 bg-white px-5 pt-12 sm:px-8 sm:pt-16 lg:px-10 dark:border-white/10 dark:bg-neutral-950">
+          <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 text-sm text-neutral-500 lg:flex-row lg:gap-12">
             {/* Brand */}
             <div className="max-w-xs">
               <a
@@ -51,13 +51,13 @@ export default function Footer() {
                 AI-powered study tools for turning your learning materials into notes, quizzes, flashcards, and actionable feedback.
               </p>
 
-              <div className="mt-6 flex items-center gap-3">
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 {socials.map(({ name, href, icon: Icon }) => (
                   <a
                     key={name}
                     href={href}
                     aria-label={name}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition-colors hover:border-neutral-300 hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-800 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition-colors hover:border-neutral-300 hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-800 dark:hover:bg-neutral-800 dark:hover:text-white"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -66,7 +66,7 @@ export default function Footer() {
             </div>
 
             {/* Link columns */}
-            <div className="grid grid-cols-2 items-start gap-10 sm:gap-16 lg:grid-cols-3">
+            <div className="grid w-full grid-cols-2 items-start gap-x-8 gap-y-10 sm:grid-cols-3 sm:gap-12 lg:w-auto lg:gap-16">
               <FooterColumn title="Pages" items={pages} />
               <FooterColumn title="Legal" items={legal} />
               <FooterColumn title="Account" items={register} />
@@ -74,7 +74,7 @@ export default function Footer() {
           </div>
 
           <div className="mx-auto mt-12 max-w-7xl border-t border-neutral-100 py-6 dark:border-white/10">
-            <p className="text-neutral-500 dark:text-neutral-400">
+            <p className="text-center text-sm text-neutral-500 sm:text-left dark:text-neutral-400">
               © {new Date().getFullYear()} Neurova. All rights reserved.
             </p>
           </div>

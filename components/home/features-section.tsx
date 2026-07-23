@@ -213,7 +213,7 @@ export default function FeaturesSection() {
   return (
     <section
       id="features"
-      className="relative overflow-hidden bg-[#fbfcff] px-4 py-20 sm:px-6 sm:py-28 lg:px-8"
+      className="relative scroll-mt-20 overflow-hidden bg-[#fbfcff] px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-28"
     >
       <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(21,101,247,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(21,101,247,.035)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_82%,transparent)]" />
       <div className="pointer-events-none absolute left-1/2 top-10 h-72 w-[48rem] -translate-x-1/2 rounded-full bg-primary/[0.07] blur-[110px]" />
@@ -226,11 +226,11 @@ export default function FeaturesSection() {
           transition={{ duration: 0.7, ease }}
           className="mx-auto max-w-3xl text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm">
+          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/15 bg-white px-3.5 py-1.5 text-center text-xs font-semibold text-primary shadow-sm">
             <Sparkles className="h-3.5 w-3.5" />
             One intelligent learning space
           </span>
-          <h2 className="mt-6 text-3xl font-semibold leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-[3.5rem]">
+          <h2 className="mt-6 text-[2rem] font-semibold leading-[1.08] tracking-[-0.04em] text-slate-950 min-[380px]:text-4xl sm:text-5xl lg:text-[3.5rem]">
             From course material to{" "}
             <span className="text-primary">real understanding.</span>
           </h2>
@@ -245,7 +245,7 @@ export default function FeaturesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.12 }}
-          className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-6"
+          className="mt-10 grid gap-4 sm:mt-14 md:grid-cols-2 lg:grid-cols-6"
         >
           <FeatureCard className="lg:col-span-4">
             <FeatureHeading
@@ -309,7 +309,7 @@ export default function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.65, delay: 0.15, ease }}
-          className="mt-10 flex flex-col items-center justify-between gap-5 rounded-[1.75rem] border border-primary/10 bg-gradient-to-r from-primary/[0.07] via-white to-blue-50 px-6 py-6 sm:flex-row sm:px-8"
+          className="mt-8 flex flex-col items-stretch justify-between gap-5 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/[0.07] via-white to-blue-50 px-5 py-6 text-center sm:mt-10 sm:flex-row sm:items-center sm:rounded-[1.75rem] sm:px-8 sm:text-left"
         >
           <div>
             <p className="font-semibold text-slate-950">
@@ -321,7 +321,7 @@ export default function FeaturesSection() {
           </div>
           <Link
             href="/signup"
-            className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(21,101,247,.25)] transition hover:-translate-y-0.5 hover:brightness-95"
+            className="group inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(21,101,247,.25)] transition hover:-translate-y-0.5 hover:brightness-95 sm:w-auto"
           >
             Start learning free
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

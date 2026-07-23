@@ -220,13 +220,13 @@ function PlanCard({ plan }: { plan: Plan }) {
 
 export default function PricingSection() {
     return (
-        <section id="pricing" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-background overflow-hidden">
+        <section id="pricing" className="relative scroll-mt-20 overflow-hidden bg-background px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
             <div className="absolute left-[-5rem] top-32 h-72 w-72 rounded-full bg-thirdary/10 blur-3xl" />
             <div className="absolute right-[-4rem] bottom-24 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
 
             <div className="relative max-w-7xl mx-auto">
                 <motion.div
-                    className="text-center mb-14 sm:mb-16 max-w-2xl mx-auto"
+                    className="mx-auto mb-12 max-w-2xl text-center sm:mb-16"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -266,7 +266,7 @@ export default function PricingSection() {
                 </motion.div>
 
                 <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-16 items-stretch"
+                    className="mb-12 grid grid-cols-1 items-stretch gap-6 sm:mb-16 sm:gap-8 md:grid-cols-2 lg:grid-cols-3"
                     variants={containerVariants}
                     initial="hidden"
                     whileInView="visible"
@@ -284,7 +284,7 @@ export default function PricingSection() {
                     transition={{ duration: 0.6 }}
                     className="relative"
                 >
-                    <div className="rounded-3xl border border-slate-200/70 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.05)] overflow-hidden p-8 sm:p-12">
+                    <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-6 shadow-[0_10px_35px_rgba(15,23,42,0.05)] sm:rounded-3xl sm:p-12">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12">
                             <div className="lg:col-span-1">
                                 <h3 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-3 tracking-tight">

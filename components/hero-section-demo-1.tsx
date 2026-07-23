@@ -20,26 +20,26 @@ export default function Hero() {
         x.set(((event.clientX - bounds.left) / bounds.width) * 100);
         y.set(((event.clientY - bounds.top) / bounds.height) * 100);
       }}
-      className="relative overflow-hidden border-b border-stone-200/80 bg-[#fcfaf8] px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8 lg:pb-28 h-[calc(100svh-70px)]"
+      className="relative min-h-[calc(100svh-64px)] overflow-hidden border-b border-stone-200/80 bg-[#fcfaf8] px-4 pb-16 pt-8 sm:px-6 sm:pb-24 sm:pt-16 lg:min-h-[calc(100svh-70px)] lg:px-8 lg:pb-28 lg:pt-20"
     >
       {/* <div className="pointer-events-none absolute left-1/2 top-[-18rem] h-[38rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(91,101,224,0.18),rgba(81,0,167,0.08)_45%,transparent_72%)]" /> */}
       <motion.div style={{ background: glow }} className="pointer-events-none absolute inset-0" />
       <div className="pointer-events-none absolute inset-0 landing-grid opacity-70" />
       <div className="pointer-events-none absolute left-1/2 top-12 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-slate-200/35 blur-[110px]" />
       <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(#5B65E0_0.7px,transparent_0.7px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.02fr_.98fr] lg:gap-16">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_.98fr] lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, ease }}
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur">
+          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-center text-xs font-semibold text-slate-600 shadow-sm backdrop-blur">
            AI-Powered Learning
           </div>
 
-          <h1 className="mt-7 max-w-3xl text-[2.65rem] font-bold leading-[1.04] tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-[4.35rem]">
+          <h1 className="mt-6 max-w-3xl text-[2.25rem] font-bold leading-[1.06] tracking-[-0.045em] text-slate-950 min-[380px]:text-[2.55rem] sm:mt-7 sm:text-6xl lg:text-[4.35rem]">
             <span className="block">Meet your AI tutor.</span>
-            <span className="landing-type-line landing-type-line-one mt-2 text-[44px] text-primary leading-[1.12] tracking-[-0.025em] sm:mt-3">
+            <span className="mt-2 block text-primary leading-[1.12] tracking-[-0.025em] sm:mt-3">
               <span className="landing-editorial italic font-medium">Every Lesson. Made Simpler.</span>
             </span>
     
@@ -57,10 +57,10 @@ export default function Hero() {
             not just memorize.
           </p>
 
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">
             <Link
               href="/signup"
-              className="landing-primary group relative isolate overflow-hidden"
+              className="landing-primary group relative isolate min-h-12 w-full overflow-hidden sm:w-auto"
             >
               <Meteors
                 number={16}
@@ -69,8 +69,8 @@ export default function Hero() {
               <span className="relative z-10">Start learning free</span>
               <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link href="/features" className="landing-secondary " >
-              <PlayCircle className="mr-1"/>Explore Demo
+            <Link href="/features" className="landing-secondary min-h-12 w-full sm:w-auto" >
+              <PlayCircle className="mr-1 h-5 w-5"/>Explore Demo
             </Link>
           </div>
 
@@ -87,15 +87,21 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.96, y: 28 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.15, ease }}
-          className="relative mx-auto w-full max-w-xl"
+          className="relative mx-auto w-full max-w-xl px-2 sm:px-0"
         >
           <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-slate-200/60 via-primary/5 to-transparent blur-2xl" />
           
 
-            <Image alt="portal" src="/portal.png" width={400} height={400} className="w-full" />
+            <Image
+              alt="Neurova student portal"
+              src="/portal.png"
+              width={400}
+              height={400}
+              className="mx-auto h-auto w-full max-w-[360px] sm:max-w-[460px] lg:max-w-none"
+            />
         
         
-          <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-5 -left-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl sm:-left-8">
+          <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-4 left-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-xl sm:-bottom-5 sm:-left-4 sm:rounded-2xl sm:px-4 sm:py-3 lg:-left-8">
             <p className="text-[11px] font-semibold text-slate-400">NEXT REVIEW</p><p className="mt-0.5 text-sm font-semibold text-slate-800">Tomorrow · 10 min</p>
           </motion.div>
         </motion.div>

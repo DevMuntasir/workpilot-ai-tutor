@@ -10,13 +10,13 @@ import SmoothScroll from "@/components/smooth-scroll";
 export default function LandingPage() {
   return (
     <SmoothScroll>
-      <main className=" bg-background text-foreground">
+      <main className="min-w-0 overflow-x-clip bg-background text-foreground">
         <Nav>
           <div className="relative flex  w-full flex-col items-start justify-start">
             <div className=" w-full">
               <Hero />
-              <FeaturesSection />
               <AppPromotionSection />
+              <FeaturesSection />
               <PricingSection />
               <BrandScrollVelocitySection />
               <Footer />
